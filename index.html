@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- 🔥 FIX UTAMA (ANTI ZOOM / OFFSIDE) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Dwellers Tracker</title>
 
 <style>
-body {
+
+/* 🔥 GLOBAL FIX */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* ANTI GESER SAMPING */
   font-family: "Courier New", monospace;
   background: #000;
   color: #00ff88;
@@ -15,54 +26,51 @@ body {
 
 /* HEADER */
 .header {
+  width: 100%;
   background: #001a0d;
-  padding: 10px 15px;
-  border-bottom: 1px solid #00ff88;
+  padding: 12px;
+  border-bottom: 2px solid #00ff88;
+}
+
+.title {
+  font-size: 16px;
+}
+
+.clock {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* CONTAINER (VERTICAL) */
+.container {
+  padding: 12px;
+}
+
+/* FORM */
+.form {
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.title { font-size: 14px; }
-.clock { font-size: 11px; }
-
-/* MAIN */
-.main {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-/* LEFT */
-.left {
-  width: 260px;
-  max-width: 100%;
-  padding: 10px;
-  border-right: 1px solid #00ff88;
-}
-
-/* FORM GRID */
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
+/* INPUT */
 input {
-  padding: 6px;
+  width: 100%;
+  padding: 10px;
   background: black;
   color: #00ff88;
   border: 1px solid #00ff88;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* BUTTON */
 button {
   width: 100%;
-  margin-top: 8px;
-  padding: 8px;
+  padding: 12px;
   background: #003311;
   color: #00ff88;
   border: 1px solid #00ff88;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -70,29 +78,14 @@ button:hover {
   background: #005522;
 }
 
-/* RIGHT */
-.right {
-  flex: 1;
-  padding: 10px;
-}
-
+/* LOG */
 .log {
+  margin-top: 15px;
   white-space: pre-line;
-  font-size: 11px;
+  font-size: 13px;
+  word-wrap: break-word;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-  .main { flex-direction: column; }
-
-  .left {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #00ff88;
-  }
-
-  .right { width: 100%; }
-}
 </style>
 </head>
 
@@ -103,31 +96,24 @@ button:hover {
   <div class="clock" id="clock"></div>
 </div>
 
-<div class="main">
+<div class="container">
 
-<div class="left">
+<div class="form">
 
-<div class="form-grid">
-<input id="level" placeholder="Lvl">
-<input id="endurance" placeholder="End">
-
+<input id="level" placeholder="Level">
+<input id="endurance" placeholder="Endurance">
 <input id="luck" placeholder="Luck">
-<input id="stim" placeholder="Stim">
-
-<input id="rad" placeholder="Rad">
-<input id="weaponMin" placeholder="Min">
-
-<input id="weaponMax" placeholder="Max">
-<input id="buffer" placeholder="Notif" value="30">
-</div>
+<input id="stim" placeholder="Stimpack">
+<input id="rad" placeholder="RadAway">
+<input id="weaponMin" placeholder="Weapon Min Damage">
+<input id="weaponMax" placeholder="Weapon Max Damage">
+<input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
 <button id="calcBtn">ACTIVATE</button>
 
 </div>
 
-<div class="right">
 <div class="log" id="log">>> Ready...</div>
-</div>
 
 </div>
 
@@ -144,7 +130,7 @@ document.getElementById("calcBtn").addEventListener("click", calculate);
 
 
 // TYPE EFFECT
-function typeLog(text, speed=10){
+function typeLog(text, speed=8){
   let i=0;
   let out=document.getElementById("log");
   out.innerText="";
@@ -158,7 +144,7 @@ function typeLog(text, speed=10){
 }
 
 
-// SIMULATION
+// SIMULATION (AKURAT)
 function calculate(){
 
 let log=">> Init...\n";
@@ -172,7 +158,7 @@ let minW=+weaponMin.value||1;
 let maxW=+weaponMax.value||1;
 let buffer=+buffer.value||30;
 
-// HP (lebih realistis)
+// HP REALISTIC
 let hpPerLevel = 2.5 + (E * 0.5);
 let maxHP = 105 + (L * hpPerLevel);
 let hp=maxHP;
@@ -256,7 +242,7 @@ log+="survive:"+survive+"m\n";
 log+="death:"+death.toLocaleString()+"\n";
 log+="alert:"+notifTime.toLocaleString();
 
-typeLog(log,8);
+typeLog(log);
 
 }
 
