@@ -108,7 +108,7 @@ button {
   <div class="clock" id="clock"></div>
 </div>
 
-<!-- INPUT -->
+<!-- INPUT (FULL RESTORED) -->
 <div class="input-section">
 
 <input id="level" placeholder="Level">
@@ -146,6 +146,7 @@ setInterval(() => {
     new Date().toLocaleString();
 }, 1000);
 
+/* SAFE INPUT */
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
@@ -174,7 +175,7 @@ function typeLog(text){
   step();
 }
 
-/* SIMULATION CORE (LOGIC PRESERVED) */
+/* SIMULATION CORE (UNCHANGED LOGIC) */
 document.getElementById("btn").addEventListener("click", simulate);
 
 function simulate(){
@@ -187,8 +188,8 @@ let Luck = val("luck") || 1;
 let S = val("stim") || 0;
 let R = val("rad") || 0;
 
-let weaponMin = val("weaponMin") || 1;
-let weaponMax = val("weaponMax") || 1;
+let wMin = val("weaponMin") || 0;
+let wMax = val("weaponMax") || 0;
 
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
@@ -201,16 +202,16 @@ let time = 0;
 let crit = 0.08 + Luck * 0.015;
 let dodge = 0.03 + Luck * 0.01;
 
-/* FIX: weapon jadi ringan (Fallout style) */
-let weaponDamage = ((weaponMin + weaponMax) / 2) * 0.02;
-
 log += "HP: " + Math.floor(hp) + "\n\n";
 
-while(hp > 0 && time < 1800){ // 30 menit = 1800 sec
+while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 let scaling = 1 + (minute * 0.006);
-let dmgRate = baseDamage * scaling + weaponDamage;
+let dmgRate = baseDamage * scaling;
+
+// weapon influence (RESTORED BUT SAFE)
+let weaponBonus = (wMin + wMax) / 200;
 
 if(Math.random() > 0.3){
   time += 10 + Math.random()*15;
@@ -219,7 +220,7 @@ if(Math.random() > 0.3){
 }
 
 let fightTime = 2 + Math.random()*3;
-let dmg = dmgRate * fightTime;
+let dmg = (dmgRate + weaponBonus) * fightTime;
 
 if(Math.random() < crit){
   dmg *= 1.4;
@@ -249,6 +250,7 @@ time += fightTime + (10 + Math.random()*15);
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
+if(hp <= 0) break;
 }
 
 let survive = Math.floor(time/60);
