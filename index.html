@@ -16,34 +16,37 @@ body {
 .header {
   background: #001a0d;
   padding: 15px;
-  font-size: 20px;
   text-align: center;
   border-bottom: 1px solid #00ff88;
   position: relative;
+  font-size: 18px;
 }
 
 .clock {
   position: absolute;
-  right: 15px;
-  top: 15px;
+  right: 10px;
+  top: 10px;
   font-size: 12px;
 }
 
 .main {
   display: flex;
-  height: calc(100vh - 60px);
+  flex-wrap: wrap;
 }
 
+/* LEFT PANEL */
 .left {
   width: 300px;
-  padding: 20px;
+  max-width: 100%;
+  padding: 15px;
   border-right: 1px solid #00ff88;
 }
 
+/* RIGHT PANEL */
 .right {
   flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+  min-height: 300px;
+  padding: 15px;
 }
 
 input {
@@ -70,7 +73,24 @@ button:hover {
 
 .log {
   white-space: pre-line;
-  font-size: 13px;
+  font-size: 12px;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+  }
+
+  .left {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #00ff88;
+  }
+
+  .right {
+    width: 100%;
+  }
 }
 </style>
 </head>
@@ -90,6 +110,9 @@ button:hover {
 
 <label>Endurance</label>
 <input type="number" id="endurance">
+
+<label>Luck</label>
+<input type="number" id="luck">
 
 <label>Stimpack</label>
 <input type="number" id="stim">
@@ -117,32 +140,38 @@ button:hover {
 
 <script>
 
-// ⏰ CLOCK
+// CLOCK
 setInterval(() => {
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
 }, 1000);
 
-
-// 🎯 BUTTON EVENT (ANTI BUG)
+// BUTTON
 document.getElementById("calcBtn").addEventListener("click", calculate);
 
 
-// 🧠 SIMULATION
+// SIMULATION
 function calculate() {
 
   let log = ">> Initializing simulation...\n";
 
-  let L = parseInt(document.getElementById("level").value) || 1;
-  let E = parseInt(document.getElementById("endurance").value) || 1;
-  let S = parseInt(document.getElementById("stim").value) || 0;
-  let R = parseInt(document.getElementById("rad").value) || 0;
-  let minW = parseInt(document.getElementById("weaponMin").value) || 1;
-  let maxW = parseInt(document.getElementById("weaponMax").value) || 1;
-  let bufferVal = parseInt(document.getElementById("buffer").value) || 30;
+  let L = +level.value || 1;
+  let E = +endurance.value || 1;
+  let Luck = +luck.value || 1;
+  let S = +stim.value || 0;
+  let R = +rad.value || 0;
+  let minW = +weaponMin.value || 1;
+  let maxW = +weaponMax.value || 1;
+  let bufferVal = +buffer.value || 30;
 
   let playerDPS = (minW + maxW) / 2;
+
+  // min DPS biar ga useless
   if (playerDPS < 5) playerDPS = 5;
+
+  // LUCK EFFECT (crit)
+  let critChance = Math.min(0.1 + Luck * 0.02, 0.5);
+  let dodgeChance = Math.min(0.05 + Luck * 0.015, 0.4);
 
   let maxHP = 120 + (L * 12) + (E * 25);
   let hp = maxHP;
@@ -152,25 +181,37 @@ function calculate() {
   let time = 0;
 
   log += ">> HP: " + maxHP + "\n";
-  log += ">> DPS: " + playerDPS + "\n\n";
+  log += ">> DPS: " + playerDPS + "\n";
+  log += ">> Crit: " + Math.floor(critChance*100) + "%\n";
+  log += ">> Dodge: " + Math.floor(dodgeChance*100) + "%\n\n";
 
   while (hp > 0 && time < 200000) {
 
     let minute = time / 60;
-    let difficulty = 1 + (minute * 0.04);
+    let difficulty = 1 + (minute * 0.02);
 
     let rand = Math.random();
 
     let enemyHP = rand < 0.5 ? 25 : rand < 0.8 ? 45 : 70;
-    let enemyDPS = rand < 0.5 ? 1.5 : rand < 0.8 ? 3 : 5;
+    let enemyDPS = rand < 0.5 ? 1 : rand < 0.8 ? 2 : 3.5;
 
     enemyHP *= difficulty;
     enemyDPS *= difficulty;
 
-    let fightTime = enemyHP / playerDPS;
+    // CRIT
+    let damageMultiplier = Math.random() < critChance ? 2 : 1;
+
+    let fightTime = enemyHP / (playerDPS * damageMultiplier);
     if (fightTime > 8) fightTime = 8;
 
     let damage = enemyDPS * fightTime;
+
+    // DODGE
+    if (Math.random() < dodgeChance) {
+      damage = 0;
+      log += ">> Dodge!\n";
+    }
+
     hp -= damage;
 
     if (hp < maxHP * 0.35 && stim > 0) {
@@ -185,7 +226,7 @@ function calculate() {
       log += ">> RadAway used\n";
     }
 
-    let idle = Math.random() * 5;
+    let idle = 5 + Math.random() * 15;
     time += fightTime + idle;
 
     log += ">> Time: " + Math.floor(time/60) + "m | HP: " + Math.floor(hp) + "\n";
