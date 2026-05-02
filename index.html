@@ -2,15 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<!-- 🔥 FIX UTAMA (ANTI ZOOM / OFFSIDE) -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Dwellers Tracker</title>
 
 <style>
-
-/* 🔥 GLOBAL FIX */
 * {
   box-sizing: border-box;
 }
@@ -18,10 +14,10 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* ANTI GESER SAMPING */
   font-family: "Courier New", monospace;
-  background: #000;
+  background: black;
   color: #00ff88;
+  overflow-x: hidden;
 }
 
 /* HEADER */
@@ -41,7 +37,7 @@ html, body {
   margin-top: 5px;
 }
 
-/* CONTAINER (VERTICAL) */
+/* CONTAINER */
 .container {
   padding: 12px;
 }
@@ -53,7 +49,6 @@ html, body {
   gap: 8px;
 }
 
-/* INPUT */
 input {
   width: 100%;
   padding: 10px;
@@ -74,7 +69,7 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+button:active {
   background: #005522;
 }
 
@@ -83,9 +78,7 @@ button:hover {
   margin-top: 15px;
   white-space: pre-line;
   font-size: 13px;
-  word-wrap: break-word;
 }
-
 </style>
 </head>
 
@@ -109,11 +102,11 @@ button:hover {
 <input id="weaponMax" placeholder="Weapon Max Damage">
 <input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
-<button id="calcBtn">ACTIVATE</button>
+<button id="btnActivate">ACTIVATE</button>
 
 </div>
 
-<div class="log" id="log">>> Ready...</div>
+<div class="log" id="log">>> READY</div>
 
 </div>
 
@@ -125,124 +118,127 @@ setInterval(()=>{
     new Date().toLocaleString();
 },1000);
 
-// BUTTON
-document.getElementById("calcBtn").addEventListener("click", calculate);
+
+// BUTTON FIX (INI YANG SERING BIKIN ERROR)
+document.getElementById("btnActivate").addEventListener("click", simulate);
 
 
-// TYPE EFFECT
-function typeLog(text, speed=8){
-  let i=0;
-  let out=document.getElementById("log");
-  out.innerText="";
-  function t(){
-    if(i<text.length){
-      out.innerText+=text[i++];
-      setTimeout(t,speed);
-    }
-  }
-  t();
+// LOG FUNCTION
+function printLog(text){
+  document.getElementById("log").innerText = text;
 }
 
 
-// SIMULATION (AKURAT)
-function calculate(){
+// SIMULATION CORE
+function simulate(){
 
-let log=">> Init...\n";
+let log=">> WASTELAND SIMULATION STARTED\n\n";
 
-let L=+level.value||1;
-let E=+endurance.value||1;
-let Luck=+luck.value||1;
-let S=+stim.value||0;
-let R=+rad.value||0;
-let minW=+weaponMin.value||1;
-let maxW=+weaponMax.value||1;
-let buffer=+buffer.value||30;
+// INPUT (AMAN - SEMUA DI-CHECK)
+let L = Number(document.getElementById("level").value) || 1;
+let E = Number(document.getElementById("endurance").value) || 1;
+let Luck = Number(document.getElementById("luck").value) || 1;
+let S = Number(document.getElementById("stim").value) || 0;
+let R = Number(document.getElementById("rad").value) || 0;
+let minW = Number(document.getElementById("weaponMin").value) || 1;
+let maxW = Number(document.getElementById("weaponMax").value) || 1;
+let buffer = Number(document.getElementById("buffer").value) || 30;
 
-// HP REALISTIC
+// HP MODEL (REALISTIC BASED ON YOUR DATA)
 let hpPerLevel = 2.5 + (E * 0.5);
 let maxHP = 105 + (L * hpPerLevel);
-let hp=maxHP;
+let hp = maxHP;
 
 // DPS
-let dps=(minW+maxW)/2;
-if(dps<3)dps=3;
+let dps = (minW + maxW) / 2;
+if(dps < 2) dps = 2;
 
-// LUCK
-let crit = Math.min(0.1 + Luck*0.02,0.5);
-let dodge = Math.min(0.05 + Luck*0.015,0.4);
+// LUCK SYSTEM
+let crit = Math.min(0.1 + Luck*0.02, 0.35);
+let dodge = Math.min(0.05 + Luck*0.01, 0.25);
 
-let stim=S;
-let rad=R;
-let time=0;
+// BASE DAMAGE FROM REAL SAVE DATA (~0.9 HP/min)
+let baseDamage = 0.9;
 
-log+="HP:"+Math.floor(maxHP)+"\n";
-log+="DPS:"+dps+"\n\n";
+let stim = S;
+let rad = R;
+let time = 0;
 
-while(hp>0 && time<200000){
+log += "HP: " + Math.floor(maxHP) + "\n";
+log += "BASE DMG: " + baseDamage + "/min\n\n";
 
-let minute=time/60;
-let diff=1+(minute*0.015);
+while(hp > 0 && time < 300000){
 
-let rand=Math.random();
+let minute = time / 60;
 
-let enemyHP = rand<0.6?20:rand<0.85?35:55;
-let enemyDPS = rand<0.6?1:rand<0.85?1.8:3;
+// SLOW SCALING (REALISTIC)
+let scaling = 1 + (minute * 0.01);
+let dmgRate = baseDamage * scaling;
 
-enemyHP*=diff;
-enemyDPS*=diff;
-
-let mult = Math.random()<crit?2:1;
-
-let fight = enemyHP/(dps*mult);
-if(fight>7)fight=7;
-
-let dmg = enemyDPS*fight;
-
-if(Math.random()<dodge){
-  dmg=0;
-  log+="dodge\n";
+// ENCOUNTER CHANCE
+if(Math.random() > 0.45){
+  time += 10 + Math.random()*20;
+  log += "idle...\n";
+  continue;
 }
 
-hp-=dmg;
+// ENEMY HIT
+let fightTime = 2 + Math.random()*4;
+let dmg = dmgRate * fightTime;
 
-if(hp<maxHP*0.35 && stim>0){
-  hp+=100;
+// CRIT
+if(Math.random() < crit){
+  dmg *= 1.5;
+  log += "crit!\n";
+}
+
+// DODGE
+if(Math.random() < dodge){
+  dmg = 0;
+  log += "dodged!\n";
+}
+
+hp -= dmg;
+
+// HEAL SYSTEM
+if(hp < maxHP*0.35 && stim > 0){
+  hp += 100;
   stim--;
-  log+="stim\n";
+  log += "stim used\n";
 }
 
-if(hp<maxHP*0.6 && rad>0){
-  hp+=50;
+if(hp < maxHP*0.6 && rad > 0){
+  hp += 50;
   rad--;
-  log+="rad\n";
+  log += "rad used\n";
 }
 
-let idle=6+Math.random()*12;
-time+=fight+idle;
+// TIME ADVANCE
+time += fightTime + (6 + Math.random()*10);
 
-log+="t:"+Math.floor(time/60)+"m hp:"+Math.floor(hp)+"\n";
+log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
-if(hp<=0)break;
+if(hp <= 0) break;
 }
 
 // RESULT
-let survive=Math.floor(time/60);
-if(survive<1)survive=1;
+let survive = Math.floor(time / 60);
+if(survive < 1) survive = 1;
 
-let now=new Date();
-let death=new Date(now.getTime()+survive*60000);
+let now = new Date();
+let death = new Date(now.getTime() + survive * 60000);
 
-let notif=survive-buffer;
-if(notif<1)notif=1;
+let notif = survive - buffer;
+if(notif < 1) notif = 1;
 
-let notifTime=new Date(now.getTime()+notif*60000);
+let notifTime = new Date(now.getTime() + notif * 60000);
 
-log+="\nRESULT\n";
-log+="survive:"+survive+"m\n";
-log+="death:"+death.toLocaleString()+"\n";
-log+="alert:"+notifTime.toLocaleString();
+log += "\nRESULT\n";
+log += "survive: " + survive + " min\n";
+log += "death: " + death.toLocaleString() + "\n";
+log += "alert: " + notifTime.toLocaleString();
 
-typeLog(log);
+printLog(log);
 
 }
 
