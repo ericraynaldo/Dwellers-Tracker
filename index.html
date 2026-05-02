@@ -16,25 +16,27 @@ body {
 .header {
   background: #001a0d;
   padding: 15px;
-  text-align: center;
   border-bottom: 1px solid #00ff88;
-  position: relative;
-  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 16px;
 }
 
 .clock {
-  position: absolute;
-  right: 10px;
-  top: 10px;
   font-size: 12px;
 }
 
+/* LAYOUT */
 .main {
   display: flex;
   flex-wrap: wrap;
 }
 
-/* LEFT PANEL */
 .left {
   width: 300px;
   max-width: 100%;
@@ -42,11 +44,10 @@ body {
   border-right: 1px solid #00ff88;
 }
 
-/* RIGHT PANEL */
 .right {
   flex: 1;
-  min-height: 300px;
   padding: 15px;
+  min-height: 300px;
 }
 
 input {
@@ -78,6 +79,15 @@ button:hover {
 
 /* 📱 MOBILE FIX */
 @media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .clock {
+    margin-top: 5px;
+  }
+
   .main {
     flex-direction: column;
   }
@@ -98,7 +108,7 @@ button:hover {
 <body>
 
 <div class="header">
-  Dwellers Tracker Terminal
+  <div class="title">Dwellers Tracker Terminal</div>
   <div class="clock" id="clock"></div>
 </div>
 
@@ -150,26 +160,41 @@ setInterval(() => {
 document.getElementById("calcBtn").addEventListener("click", calculate);
 
 
+// ✨ TYPE EFFECT
+function typeLog(text, speed = 15) {
+  let i = 0;
+  let output = document.getElementById("log");
+  output.innerText = "";
+
+  function typing() {
+    if (i < text.length) {
+      output.innerText += text.charAt(i);
+      i++;
+      setTimeout(typing, speed);
+    }
+  }
+
+  typing();
+}
+
+
 // SIMULATION
 function calculate() {
 
   let log = ">> Initializing simulation...\n";
 
-  let L = +level.value || 1;
-  let E = +endurance.value || 1;
-  let Luck = +luck.value || 1;
-  let S = +stim.value || 0;
-  let R = +rad.value || 0;
-  let minW = +weaponMin.value || 1;
-  let maxW = +weaponMax.value || 1;
-  let bufferVal = +buffer.value || 30;
+  let L = parseInt(document.getElementById("level").value) || 1;
+  let E = parseInt(document.getElementById("endurance").value) || 1;
+  let Luck = parseInt(document.getElementById("luck").value) || 1;
+  let S = parseInt(document.getElementById("stim").value) || 0;
+  let R = parseInt(document.getElementById("rad").value) || 0;
+  let minW = parseInt(document.getElementById("weaponMin").value) || 1;
+  let maxW = parseInt(document.getElementById("weaponMax").value) || 1;
+  let bufferVal = parseInt(document.getElementById("buffer").value) || 30;
 
   let playerDPS = (minW + maxW) / 2;
-
-  // min DPS biar ga useless
   if (playerDPS < 5) playerDPS = 5;
 
-  // LUCK EFFECT (crit)
   let critChance = Math.min(0.1 + Luck * 0.02, 0.5);
   let dodgeChance = Math.min(0.05 + Luck * 0.015, 0.4);
 
@@ -198,7 +223,6 @@ function calculate() {
     enemyHP *= difficulty;
     enemyDPS *= difficulty;
 
-    // CRIT
     let damageMultiplier = Math.random() < critChance ? 2 : 1;
 
     let fightTime = enemyHP / (playerDPS * damageMultiplier);
@@ -206,7 +230,6 @@ function calculate() {
 
     let damage = enemyDPS * fightTime;
 
-    // DODGE
     if (Math.random() < dodgeChance) {
       damage = 0;
       log += ">> Dodge!\n";
@@ -250,7 +273,8 @@ function calculate() {
   log += ">> Death: " + death.toLocaleString() + "\n";
   log += ">> Alert: " + notifTime.toLocaleString();
 
-  document.getElementById("log").innerText = log;
+  // ✨ tampilkan dengan efek ketik
+  typeLog(log, 10);
 }
 
 </script>
