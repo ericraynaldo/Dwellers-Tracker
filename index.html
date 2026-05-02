@@ -7,59 +7,81 @@
 <title>Dwellers Tracker</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   font-family: "Courier New", monospace;
   background: black;
   color: #00ff88;
-  overflow-x: hidden;
+  overflow: hidden; /* 🔥 FIX: halaman tidak bisa scroll */
 }
 
+/* HEADER */
 .header {
-  padding: 12px;
+  padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
 }
 
-.title { font-size: 16px; }
+.title {
+  font-size: 16px;
+}
 
-.clock { font-size: 12px; margin-top: 5px; }
+.clock {
+  font-size: 12px;
+}
 
-.container { padding: 12px; }
+/* LAYOUT */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  padding: 10px;
+  gap: 10px;
+}
 
+/* INPUT PANEL */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 input {
-  padding: 10px;
+  padding: 8px;
   background: black;
-  color: #00ff88;
   border: 1px solid #00ff88;
-  font-size: 14px;
+  color: #00ff88;
 }
 
 button {
-  padding: 12px;
+  padding: 10px;
   background: #003311;
-  color: #00ff88;
   border: 1px solid #00ff88;
-  font-size: 14px;
+  color: #00ff88;
   cursor: pointer;
 }
 
-button:active {
-  background: #005522;
+/* 🔥 LOG WINDOW (FIXED SCROLL AREA) */
+.log {
+  flex: 1;
+  border: 1px solid #00ff88;
+  padding: 10px;
+  overflow-y: auto;   /* 🔥 SCROLL HANYA DI SINI */
+  white-space: pre-line;
+  font-size: 12px;
+  background: rgba(0,255,136,0.05);
 }
 
-.log {
-  margin-top: 15px;
-  white-space: pre-line;
-  font-size: 13px;
+/* smooth scroll feel */
+.log::-webkit-scrollbar {
+  width: 6px;
+}
+.log::-webkit-scrollbar-thumb {
+  background: #00ff88;
 }
 </style>
 </head>
@@ -80,11 +102,11 @@ button:active {
 <input id="luck" placeholder="Luck">
 <input id="stim" placeholder="Stimpack">
 <input id="rad" placeholder="RadAway">
-<input id="weaponMin" placeholder="Weapon Min Damage">
-<input id="weaponMax" placeholder="Weapon Max Damage">
-<input id="buffer" placeholder="Notif Buffer (min)" value="30">
+<input id="weaponMin" placeholder="Weapon Min">
+<input id="weaponMax" placeholder="Weapon Max">
+<input id="buffer" placeholder="Notif Buffer" value="30">
 
-<button id="activateBtn">ACTIVATE</button>
+<button id="btn">ACTIVATE</button>
 
 </div>
 
@@ -95,53 +117,54 @@ button:active {
 <script>
 
 // CLOCK
-setInterval(() => {
-  document.getElementById("clock").innerText = new Date().toLocaleString();
-}, 1000);
+setInterval(()=>{
+  document.getElementById("clock").innerText =
+    new Date().toLocaleString();
+},1000);
 
 
-// TYPEWRITER
+// TYPEWRITER (smooth + auto scroll)
 function typeLog(text){
   let i = 0;
-  const el = document.getElementById("log");
+  let el = document.getElementById("log");
   el.innerText = "";
 
   function step(){
     if(i < text.length){
       el.innerText += text[i++];
-      setTimeout(step, 6);
+      el.scrollTop = el.scrollHeight; // 🔥 AUTO SCROLL INSIDE BOX
+      setTimeout(step, 5);
     }
   }
   step();
 }
 
 
-// BUTTON (FIXED SAFE BIND)
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("activateBtn").addEventListener("click", simulate);
-});
+// BUTTON
+document.getElementById("btn").addEventListener("click", simulate);
 
 
-// SIMULATION (DATA BASED FIXED MODEL)
+// SIMULATION FIXED MODEL
 function simulate(){
-
-let L = Number(document.getElementById("level").value) || 1;
-let E = Number(document.getElementById("endurance").value) || 1;
-let Luck = Number(document.getElementById("luck").value) || 1;
-let S = Number(document.getElementById("stim").value) || 0;
-let R = Number(document.getElementById("rad").value) || 0;
-let minW = Number(document.getElementById("weaponMin").value) || 1;
-let maxW = Number(document.getElementById("weaponMax").value) || 1;
-let buffer = Number(document.getElementById("buffer").value) || 30;
 
 let log = ">> SIMULATION START\n\n";
 
-// HP MODEL (BASED ON REAL DATA STYLE)
+// INPUT SAFE
+let L = Number(level.value) || 1;
+let E = Number(endurance.value) || 1;
+let Luck = Number(luck.value) || 1;
+let S = Number(stim.value) || 0;
+let R = Number(rad.value) || 0;
+let minW = Number(weaponMin.value) || 1;
+let maxW = Number(weaponMax.value) || 1;
+let buffer = Number(buffer.value) || 30;
+
+// HP MODEL
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
-// DAMAGE MODEL (FROM YOUR REAL SAVE)
-let baseDamage = 0.6; // FIXED EARLY GAME RATE
+// DAMAGE BASE (REALISTIC EARLY GAME)
+let baseDamage = 0.6;
 
 let stim = S;
 let rad = R;
@@ -152,26 +175,26 @@ let crit = 0.08 + Luck * 0.015;
 let dodge = 0.03 + Luck * 0.01;
 
 log += "HP: " + Math.floor(hp) + "\n";
-log += "BASE DMG: " + baseDamage + "/min\n\n";
+log += "BASE DMG: " + baseDamage + "\n\n";
 
 while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 
-// SLOW SCALING (IMPORTANT FIX)
+// SLOW SCALING
 let scaling = 1 + (minute * 0.006);
-let damageRate = baseDamage * scaling;
+let dmgRate = baseDamage * scaling;
 
-// LOW ENCOUNTER FREQUENCY
+// ENCOUNTER (JARANG)
 if(Math.random() > 0.28){
-  time += 12 + Math.random() * 20;
+  time += 10 + Math.random()*20;
   log += "idle...\n";
   continue;
 }
 
-// ENEMY HIT
-let fightTime = 1.5 + Math.random() * 3;
-let dmg = damageRate * fightTime;
+// FIGHT
+let fightTime = 2 + Math.random()*3;
+let dmg = dmgRate * fightTime;
 
 // CRIT
 if(Math.random() < crit){
@@ -187,21 +210,21 @@ if(Math.random() < dodge){
 
 hp -= dmg;
 
-// HEAL LOGIC
-if(hp < maxHP * 0.4 && stim > 0){
+// HEAL
+if(hp < maxHP*0.4 && stim > 0){
   hp += 80;
   stim--;
   log += "stim\n";
 }
 
-if(hp < maxHP * 0.6 && rad > 0){
+if(hp < maxHP*0.6 && rad > 0){
   hp += 40;
   rad--;
   log += "rad\n";
 }
 
-// TIME ADVANCE
-time += fightTime + (8 + Math.random() * 15);
+// TIME
+time += fightTime + (10 + Math.random()*15);
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
@@ -209,23 +232,22 @@ if(hp <= 0) break;
 }
 
 // RESULT
-let survive = Math.floor(time / 60);
+let survive = Math.floor(time/60);
 if(survive < 1) survive = 1;
 
 let now = new Date();
-let death = new Date(now.getTime() + survive * 60000);
+let death = new Date(now.getTime() + survive*60000);
 
 let notif = survive - buffer;
 if(notif < 1) notif = 1;
 
-let notifTime = new Date(now.getTime() + notif * 60000);
+let alert = new Date(now.getTime() + notif*60000);
 
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
 log += "death: " + death.toLocaleString() + "\n";
-log += "alert: " + notifTime.toLocaleString();
+log += "alert: " + alert.toLocaleString();
 
-// OUTPUT
 typeLog(log);
 
 }
