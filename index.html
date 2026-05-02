@@ -5,12 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<!-- PWA MODE -->
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
 
-<title>Dwellers Tracker</title>
+<title>Dwellers Tracker V1.0</title>
 
 <style>
 * {
@@ -22,9 +20,9 @@ html, body {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  font-family: "Courier New", monospace;
   background: black;
   color: #00ff88;
+  font-family: "Courier New", monospace;
 }
 
 /* HEADER */
@@ -37,6 +35,11 @@ html, body {
 
 .title {
   font-size: 15px;
+}
+
+.version {
+  font-size: 10px;
+  opacity: 0.7;
 }
 
 .clock {
@@ -52,7 +55,7 @@ html, body {
   gap: 8px;
 }
 
-/* INPUT PANEL */
+/* INPUT */
 .form {
   display: flex;
   flex-direction: column;
@@ -61,10 +64,10 @@ html, body {
 
 input {
   padding: 8px;
-  font-size: 13px;
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
+  font-size: 13px;
 }
 
 button {
@@ -74,14 +77,15 @@ button {
   color: #00ff88;
 }
 
-/* 🔥 FIX LOG WINDOW (TIDAK FULL BAWAH LAGI) */
+/* 🔥 LOG WINDOW FIXED POSITION (TIDAK NEMPEL BAWAH) */
 .log {
-  height: 45vh;          /* 🔥 FIX UTAMA */
-  overflow-y: auto;
+  height: 42vh;          /* 🔥 penting: tidak full tinggi */
+  margin-bottom: 18px;   /* 🔥 jarak bawah HP */
   border: 1px solid #00ff88;
   padding: 8px;
-  font-size: 12px;
+  overflow-y: auto;
   background: rgba(0,255,136,0.05);
+  font-size: 12px;
 }
 
 /* scrollbar */
@@ -91,6 +95,11 @@ button {
 .log::-webkit-scrollbar-thumb {
   background: #00ff88;
 }
+
+/* READY POSITION FIX (biar tidak “ketarik ke bawah”) */
+#log {
+  min-height: 200px;
+}
 </style>
 
 </head>
@@ -99,6 +108,7 @@ button {
 
 <div class="header">
   <div class="title">Dwellers Tracker</div>
+  <div class="version">V1.0</div>
   <div class="clock" id="clock"></div>
 </div>
 
@@ -149,13 +159,13 @@ function typeLog(text){
 }
 
 
-// BUTTON SAFE BIND
+// BUTTON
 window.onload = () => {
   document.getElementById("btn").addEventListener("click", simulate);
 };
 
 
-// SIMULATION CORE (STABLE MODEL)
+// SIMULATION CORE
 function simulate(){
 
 let log = ">> SIMULATION START\n\n";
@@ -165,8 +175,6 @@ let E = Number(endurance.value) || 1;
 let Luck = Number(luck.value) || 1;
 let S = Number(stim.value) || 0;
 let R = Number(rad.value) || 0;
-let minW = Number(weaponMin.value) || 1;
-let maxW = Number(weaponMax.value) || 1;
 let buffer = Number(buffer.value) || 30;
 
 let maxHP = 100 + (L * (3 + E * 0.8));
@@ -186,13 +194,11 @@ log += "HP: " + Math.floor(hp) + "\n\n";
 while(hp > 0 && time < 300000){
 
 let minute = time / 60;
-
 let scaling = 1 + (minute * 0.006);
 let dmgRate = baseDamage * scaling;
 
-// encounter jarang
 if(Math.random() > 0.3){
-  time += 12 + Math.random()*18;
+  time += 12 + Math.random()*15;
   log += "idle...\n";
   continue;
 }
