@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dweller Tracker</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+}
+
+.card {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #22c55e;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dweller {
+  background: #334155;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.timer {
+  font-size: 18px;
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Dweller Tracker</h1>
+
+<div class="container">
+
+<div class="card">
+  <label>Nama Dweller</label>
+  <input type="text" id="name">
+
+  <label>Endurance</label>
+  <input type="number" id="endurance">
+
+  <label>Stimpack</label>
+  <input type="number" id="stim">
+
+  <label>RadAway</label>
+  <input type="number" id="rad">
+
+  <button onclick="addDweller()">Start Tracking</button>
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+let dwellers = [];
+
+function addDweller() {
+  let name = document.getElementById("name").value || "Dweller";
+  let e = parseInt(document.getElementById("endurance").value) || 0;
+  let s = parseInt(document.getElementById("stim").value) || 0;
+  let r = parseInt(document.getElementById("rad").value) || 0;
+
+  let totalMinutes = 30 + (e*10) + (s*15) + (r*10);
+  let endTime = Date.now() + totalMinutes * 60000;
+
+  dwellers.push({ name, endTime });
+
+  render();
+}
+
+function render() {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  dwellers.forEach((d, i) => {
+    let div = document.createElement("div");
+    div.className = "dweller";
+
+    div.innerHTML = `
+      <b>${d.name}</b>
+      <div class="timer" id="timer-${i}"></div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function updateTimers() {
+  dwellers.forEach((d, i) => {
+    let now = Date.now();
+    let diff = d.endTime - now;
+
+    let el = document.getElementById("timer-" + i);
+    if (!el) return;
+
+    if (diff <= 0) {
+      el.innerHTML = "⚠️ WAKTU CEK!";
+      notify(d.name);
+    } else {
+      let m = Math.floor(diff / 60000);
+      let s = Math.floor((diff % 60000) / 1000);
+      el.innerHTML = m + "m " + s + "s";
+    }
+  });
+}
+
+function notify(name) {
+  if (Notification.permission === "granted") {
+    new Notification("Dweller Alert", {
+      body: name + " harus dicek!"
+    });
+  }
+}
+
+setInterval(updateTimers, 1000);
+
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+</script>
+
+</body>
+</html>
