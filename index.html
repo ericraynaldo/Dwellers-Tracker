@@ -7,6 +7,7 @@
 
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 <title>Dwellers Tracker V1.0</title>
 
@@ -19,27 +20,36 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
   background: black;
   color: #00ff88;
   font-family: "Courier New", monospace;
+
+  /* 🔥 FIX: allow scroll but clean */
+  overflow-y: auto;
 }
 
-/* 🔥 MAIN GRID LAYOUT (FIX OVERLAP TOTAL) */
+/* SAFE AREA FIX FOR ANDROID / IPHONE */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* MAIN APP */
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
-/* ================= HEADER ================= */
+/* HEADER (NAIK DI HP) */
 .header {
-  height: 55px;
-  padding: 8px 10px;
+  padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
-  flex-shrink: 0;
+
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .title {
@@ -47,25 +57,26 @@ html, body {
 }
 
 .version {
-  font-size: 10px;
-  opacity: 0.7;
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 .clock {
   font-size: 11px;
+  margin-top: 3px;
 }
 
-/* ================= INPUT SECTION ================= */
+/* INPUT */
 .input-section {
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex-shrink: 0;
 }
 
 input {
-  padding: 7px;
+  padding: 8px;
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
@@ -79,19 +90,18 @@ button {
   color: #00ff88;
 }
 
-/* ================= LOG WINDOW ================= */
+/* LOG WINDOW */
 .log {
-  flex: 1; /* 🔥 ini bikin dia middle section fix */
   margin: 0 10px;
+  height: 45vh; /* 🔥 fixed middle window */
   border: 1px solid #00ff88;
   padding: 8px;
   overflow-y: auto;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
-  min-height: 0; /* 🔥 FIX FLEX BUG MOBILE */
 }
 
-/* scrollbar */
+/* SCROLL BAR */
 .log::-webkit-scrollbar {
   width: 4px;
 }
@@ -99,17 +109,20 @@ button {
   background: #00ff88;
 }
 
-/* ================= FOOTER ================= */
+/* FOOTER (FIX NAIK + TIDAK TERLALU TURUN) */
 .footer {
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-top: 10px;
+  padding: 10px;
+  text-align: center;
+
   border-top: 2px solid #00ff88;
   background: #001a0d;
+
   font-size: 11px;
-  flex-shrink: 0;
-  opacity: 0.9;
+
+  /* 🔥 penting biar tidak “jatuh ke bawah layar” */
+  position: relative;
+  bottom: 0;
 }
 
 </style>
@@ -143,7 +156,7 @@ button {
 
 </div>
 
-<!-- LOGS -->
+<!-- LOG -->
 <div class="log" id="log">>> READY</div>
 
 <!-- FOOTER -->
@@ -197,11 +210,9 @@ let S = Number(stim.value) || 0;
 let R = Number(rad.value) || 0;
 let buffer = Number(buffer.value) || 30;
 
-// HP MODEL
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
-// BASE DAMAGE
 let baseDamage = 0.6;
 
 let stim = S;
