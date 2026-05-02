@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-<title>Dwellers Tracker V1.2</title>
+<title>Dwellers Tracker V1.3</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -64,18 +64,23 @@ button {
   color: #00ff88;
 }
 
+/* 🔥 LOG FIXED WINDOW */
 .log {
   margin: 10px;
   border: 1px solid #00ff88;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
   padding: 8px;
+  height: 170px;
+  overflow: hidden;
 }
 
 #logText {
   white-space: pre-wrap;
+  line-height: 1.3;
 }
 
+/* FOOTER */
 .footer {
   margin-top: auto;
   padding: 10px;
@@ -95,7 +100,7 @@ button {
 
 <div class="header">
   <div class="title">Dwellers Tracker</div>
-  <div class="version">V1.2 REALISTIC ENGINE</div>
+  <div class="version">V1.3 REAL SIM ENGINE</div>
   <div class="clock" id="clock"></div>
 </div>
 
@@ -119,7 +124,7 @@ button {
 </div>
 
 <div class="footer">
-  Dwellers Tracker V1.2 — Real Survival Simulation
+  Dwellers Tracker V1.3 — Terminal Survival Engine
 </div>
 
 </div>
@@ -135,12 +140,34 @@ setInterval(() => {
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
-/* LOG */
+/* 🔥 FIXED LOG WINDOW (8 LINES ONLY) */
 function typeLog(text){
-  document.getElementById("logText").innerText = text;
+  const el = document.getElementById("logText");
+
+  let i = 0;
+  let buffer = "";
+
+  function step(){
+    if(i < text.length){
+      buffer += text[i++];
+
+      let lines = buffer.split("\n");
+
+      // 🔥 ONLY KEEP LAST 8 LINES
+      if(lines.length > 8){
+        lines = lines.slice(-8);
+      }
+
+      el.innerText = lines.join("\n");
+
+      setTimeout(step, 6);
+    }
+  }
+
+  step();
 }
 
-/* CORE SIMULATION */
+/* SIMULATION */
 document.getElementById("btn").addEventListener("click", simulate);
 
 function simulate(){
@@ -150,6 +177,7 @@ let log = ">> SIMULATION START\n\n";
 let L = val("level") || 1;
 let E = val("endurance") || 1;
 let Luck = val("luck") || 1;
+
 let stim = val("stim") || 0;
 let rad = val("rad") || 0;
 
@@ -164,73 +192,76 @@ let hp = maxHP;
 let radDamage = 0;
 let time = 0;
 
-log += "START HP: " + Math.floor(hp) + "\n";
+log += "HP: " + Math.floor(hp) + "\n";
 
+/* CORE LOOP */
 while(hp > 0 && time < 20000){
 
-/* LEVEL UP SYSTEM */
+/* LEVEL UP (FULL HEAL + MAX HP UP) */
 if(Math.random() < 0.02){
   level++;
-
-  let oldMax = maxHP;
-
   maxHP = 100 + (level * (3 + E * 0.8));
-
-  hp = maxHP; // FULL HEAL
-
-  log += "LEVEL UP (" + oldMax + " → " + maxHP + ") FULL HEAL\n";
+  hp = maxHP;
+  log += "LEVEL UP → FULL HEAL\n";
 }
 
-/* RAD DAMAGE SYSTEM (PERMANENT PRESSURE) */
-if(rad > 0 && Math.random() < 0.3){
+/* RAD DAMAGE (PERMANENT MAX REDUCTION) */
+if(rad > 0 && Math.random() < 0.25){
   radDamage += 5;
   rad--;
-  log += "RAD INCREASED\n";
+  log += "RAD +\n";
 }
 
-/* EFFECTIVE MAX HP */
-let effectiveMaxHP = maxHP - radDamage;
-if(hp > effectiveMaxHP) hp = effectiveMaxHP;
+let effectiveMax = maxHP - radDamage;
+if(hp > effectiveMax) hp = effectiveMax;
 
-/* WEAPON SYSTEM */
+/* WEAPON */
 let weapon = (wMin + wMax) / 2;
 
-/* DAMAGE MODEL (REALISTIC CURVE) */
+/* DAMAGE MODEL */
 let baseDamage = 1.2;
-let enduranceReduce = 1 - (E * 0.04);
-let luckVariance = 0.8 + Math.random() * (1 + Luck * 0.02);
+let enduranceReduce = 1 - (E * 0.035);
+let luckVar = 0.8 + Math.random() * (1 + Luck * 0.02);
 
-let dmg = (baseDamage + weapon * 0.05) * enduranceReduce * luckVariance;
+let dmg = (baseDamage + weapon * 0.05) * enduranceReduce * luckVar;
 
-/* ENCOUNTER SYSTEM (IMPORTANT FIX) */
-let encounterChance = 0.45 + (L * 0.01);
-
-if(Math.random() < encounterChance){
+/* ENCOUNTER SYSTEM */
+if(Math.random() > 0.45){
   hp -= dmg;
 } else {
   log += "idle...\n";
 }
 
-/* STIM SYSTEM */
-if(hp < effectiveMaxHP * 0.35 && stim > 0){
+/* STIM */
+if(hp < effectiveMax * 0.35 && stim > 0){
   hp += 60;
   stim--;
-  log += "stim used\n";
+  log += "stim\n";
 }
 
-/* TIME PROGRESSION (VARIATIVE, NOT FIXED LOOP) */
+/* TIME FLOW */
 time += 8 + Math.random() * 18;
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
 }
 
-let survive = Math.floor(time / 60);
-if(survive < 1) survive = 1;
+/* RESULT */
+let surviveMin = Math.floor(time / 60);
+if(surviveMin < 1) surviveMin = 1;
+
+let deathDate = new Date(Date.now() + surviveMin * 60000);
+
+let days = Math.floor(surviveMin / 1440);
+let hours = Math.floor((surviveMin % 1440) / 60);
+let minutes = surviveMin % 60;
 
 log += "\nRESULT\n";
-log += "survive: " + survive + " min";
+log += surviveMin + " min\n";
+log += days + "d " + hours + "h " + minutes + "m\n";
+log += "death: " + deathDate.toLocaleString();
 
+/* OUTPUT */
 typeLog(log);
 
 }
