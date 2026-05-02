@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dwellers Tracker">
 
 <title>Dwellers Tracker V1.0</title>
 
@@ -15,7 +17,9 @@
 
 <style>
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
@@ -23,22 +27,30 @@ html, body {
   background: black;
   color: #00ff88;
   font-family: "Courier New", monospace;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
+/* APP LAYOUT */
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
+/* HEADER */
 .header {
   padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
+  position: sticky;
+  top: 0;
 }
 
+.title { font-size: 15px; }
+.version { font-size: 11px; opacity: 0.8; }
+.clock { font-size: 11px; }
+
+/* INPUT */
 .input-section {
   padding: 10px;
   display: flex;
@@ -46,15 +58,12 @@ html, body {
   gap: 6px;
 }
 
-input, button {
-  touch-action: manipulation;
-}
-
 input {
   padding: 8px;
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
+  font-size: 13px;
 }
 
 button {
@@ -64,6 +73,7 @@ button {
   color: #00ff88;
 }
 
+/* LOG WINDOW */
 .log {
   flex: 1;
   margin: 0 10px;
@@ -72,8 +82,10 @@ button {
   overflow-y: auto;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
+  min-height: 200px;
 }
 
+/* FOOTER */
 .footer {
   padding: 10px;
   text-align: center;
@@ -90,12 +102,14 @@ button {
 
 <div class="app">
 
+<!-- HEADER -->
 <div class="header">
-  <div>Dwellers Tracker</div>
-  <div>V1.0</div>
-  <div id="clock"></div>
+  <div class="title">Dwellers Tracker</div>
+  <div class="version">V1.0</div>
+  <div class="clock" id="clock"></div>
 </div>
 
+<!-- INPUT -->
 <div class="input-section">
 
 <input id="level" placeholder="Level">
@@ -103,13 +117,18 @@ button {
 <input id="luck" placeholder="Luck">
 <input id="stim" placeholder="Stimpack">
 <input id="rad" placeholder="RadAway">
+<input id="weaponMin" placeholder="Weapon Min">
+<input id="weaponMax" placeholder="Weapon Max">
+<input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
 <button id="btn">ACTIVATE</button>
 
 </div>
 
+<!-- LOG -->
 <div class="log" id="log">>> READY</div>
 
+<!-- FOOTER -->
 <div class="footer">
   Dwellers Tracker V1.0 — Wasteland Simulation Core
 </div>
@@ -124,85 +143,62 @@ setInterval(() => {
     new Date().toLocaleString();
 }, 1000);
 
-/* INPUT */
+/* SAFE INPUT */
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
-/* LOG SYSTEM (LIMITED + TYPEWRITER) */
-const logEl = document.getElementById("log");
-let logLines = [];
-const MAX_LINES = 80;
-
-/* TYPEWRITER QUEUE */
-let queue = [];
-let typing = false;
-
-/* ADD LOG */
-function addLog(text){
-  queue.push(text);
-  if(!typing) typeNext();
-}
-
-/* TYPE EFFECT */
-function typeNext(){
-  if(queue.length === 0){
-    typing = false;
-    return;
-  }
-
-  typing = true;
-  let text = queue.shift();
+/* TYPE LOG (FIXED SCROLL ONLY) */
+function typeLog(text){
   let i = 0;
-
-  let line = document.createElement("div");
-  logEl.appendChild(line);
+  const el = document.getElementById("log");
 
   function step(){
+
+    if(i === 0){
+      el.innerText = "";
+    }
+
     if(i < text.length){
-      line.textContent += text[i++];
-      setTimeout(step, 10);
-    } else {
-      finalize(line);
-      typeNext();
+      el.innerText += text[i++];
+
+      // 🔥 FIX: scroll hanya jika user di bawah
+      let nearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
+
+      if(nearBottom){
+        el.scrollTop = el.scrollHeight;
+      }
+
+      setTimeout(step, 4);
     }
   }
 
   step();
 }
 
-/* LIMIT LOG MEMORY */
-function finalize(line){
-  logLines.push(line);
+/* FIXED BUTTON */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btn");
+  btn.addEventListener("click", simulate);
+});
 
-  if(logLines.length > MAX_LINES){
-    let old = logLines.shift();
-    old.remove();
-  }
-
-  // hanya scroll kalau user masih di bawah
-  let nearBottom =
-    logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 50;
-
-  if(nearBottom){
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-}
-
-/* SIMULATION */
-document.getElementById("btn").addEventListener("click", simulate);
-
+/* SIMULATION CORE (TIDAK DIUBAH SAMA SEKALI) */
 function simulate(){
+
+let log = ">> SIMULATION START\n\n";
 
 let L = val("level") || 1;
 let E = val("endurance") || 1;
 let Luck = val("luck") || 1;
 let S = val("stim") || 0;
 let R = val("rad") || 0;
+let buffer = val("buffer") || 30;
 
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
 let baseDamage = 0.6;
+
 let stim = S;
 let rad = R;
 let time = 0;
@@ -210,15 +206,9 @@ let time = 0;
 let crit = 0.08 + Luck * 0.015;
 let dodge = 0.03 + Luck * 0.01;
 
-addLog(">> SIMULATION START");
-addLog("HP: " + Math.floor(hp));
+log += "HP: " + Math.floor(hp) + "\n\n";
 
-function step(){
-
-if(hp <= 0 || time > 300000){
-  finish();
-  return;
-}
+while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 let scaling = 1 + (minute * 0.006);
@@ -226,9 +216,8 @@ let dmgRate = baseDamage * scaling;
 
 if(Math.random() > 0.3){
   time += 10 + Math.random()*15;
-  addLog("idle...");
-  setTimeout(step, 40);
-  return;
+  log += "idle...\n";
+  continue;
 }
 
 let fightTime = 2 + Math.random()*3;
@@ -236,12 +225,12 @@ let dmg = dmgRate * fightTime;
 
 if(Math.random() < crit){
   dmg *= 1.4;
-  addLog("CRIT!");
+  log += "crit!\n";
 }
 
 if(Math.random() < dodge){
   dmg = 0;
-  addLog("DODGED!");
+  log += "dodged!\n";
 }
 
 hp -= dmg;
@@ -249,35 +238,41 @@ hp -= dmg;
 if(hp < maxHP*0.4 && stim > 0){
   hp += 80;
   stim--;
-  addLog("stim used");
+  log += "stim\n";
 }
 
 if(hp < maxHP*0.6 && rad > 0){
   hp += 40;
   rad--;
-  addLog("rad used");
+  log += "rad\n";
 }
 
 time += fightTime + (10 + Math.random()*15);
 
-addLog(`t:${Math.floor(time/60)}m hp:${Math.floor(hp)}`);
+log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
-setTimeout(step, 40);
+if(hp <= 0) break;
 }
 
-function finish(){
-  let survive = Math.max(1, Math.floor(time/60));
-  let death = new Date(Date.now() + survive * 60000);
+let survive = Math.floor(time/60);
+if(survive < 1) survive = 1;
 
-  addLog(" ");
-  addLog("RESULT");
-  addLog("survive: " + survive + " min");
-  addLog("death: " + death.toLocaleString());
+let death = new Date(Date.now() + survive * 60000);
+
+log += "\nRESULT\n";
+log += "survive: " + survive + " min\n";
+log += "death: " + death.toLocaleString();
+
+typeLog(log);
 }
 
-step();
-}
+</script>
 
+<!-- 🔥 PWA SERVICE WORKER (TIDAK SENTUH LOGIC) -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
