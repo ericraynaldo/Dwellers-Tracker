@@ -13,55 +13,53 @@ body {
   color: #00ff88;
 }
 
+/* HEADER */
 .header {
   background: #001a0d;
-  padding: 15px;
+  padding: 10px 15px;
   border-bottom: 1px solid #00ff88;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   flex-wrap: wrap;
 }
 
-.title {
-  font-size: 16px;
-}
+.title { font-size: 14px; }
+.clock { font-size: 11px; }
 
-.clock {
-  font-size: 12px;
-}
-
-/* LAYOUT */
+/* MAIN */
 .main {
   display: flex;
   flex-wrap: wrap;
 }
 
+/* LEFT */
 .left {
-  width: 300px;
+  width: 260px;
   max-width: 100%;
-  padding: 15px;
+  padding: 10px;
   border-right: 1px solid #00ff88;
 }
 
-.right {
-  flex: 1;
-  padding: 15px;
-  min-height: 300px;
+/* FORM GRID */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
 input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
+  padding: 6px;
   background: black;
   color: #00ff88;
   border: 1px solid #00ff88;
+  font-size: 12px;
 }
 
+/* BUTTON */
 button {
   width: 100%;
-  padding: 10px;
+  margin-top: 8px;
+  padding: 8px;
   background: #003311;
   color: #00ff88;
   border: 1px solid #00ff88;
@@ -72,25 +70,20 @@ button:hover {
   background: #005522;
 }
 
-.log {
-  white-space: pre-line;
-  font-size: 12px;
+/* RIGHT */
+.right {
+  flex: 1;
+  padding: 10px;
 }
 
-/* 📱 MOBILE FIX */
+.log {
+  white-space: pre-line;
+  font-size: 11px;
+}
+
+/* MOBILE */
 @media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .clock {
-    margin-top: 5px;
-  }
-
-  .main {
-    flex-direction: column;
-  }
+  .main { flex-direction: column; }
 
   .left {
     width: 100%;
@@ -98,9 +91,7 @@ button:hover {
     border-bottom: 1px solid #00ff88;
   }
 
-  .right {
-    width: 100%;
-  }
+  .right { width: 100%; }
 }
 </style>
 </head>
@@ -108,42 +99,34 @@ button:hover {
 <body>
 
 <div class="header">
-  <div class="title">Dwellers Tracker Terminal</div>
+  <div class="title">Dwellers Tracker</div>
   <div class="clock" id="clock"></div>
 </div>
 
 <div class="main">
 
 <div class="left">
-<label>Level</label>
-<input type="number" id="level">
 
-<label>Endurance</label>
-<input type="number" id="endurance">
+<div class="form-grid">
+<input id="level" placeholder="Lvl">
+<input id="endurance" placeholder="End">
 
-<label>Luck</label>
-<input type="number" id="luck">
+<input id="luck" placeholder="Luck">
+<input id="stim" placeholder="Stim">
 
-<label>Stimpack</label>
-<input type="number" id="stim">
+<input id="rad" placeholder="Rad">
+<input id="weaponMin" placeholder="Min">
 
-<label>RadAway</label>
-<input type="number" id="rad">
+<input id="weaponMax" placeholder="Max">
+<input id="buffer" placeholder="Notif" value="30">
+</div>
 
-<label>Weapon Min</label>
-<input type="number" id="weaponMin">
+<button id="calcBtn">ACTIVATE</button>
 
-<label>Weapon Max</label>
-<input type="number" id="weaponMax">
-
-<label>Notif Buffer (min)</label>
-<input type="number" id="buffer" value="30">
-
-<button id="calcBtn">RUN SIMULATION</button>
 </div>
 
 <div class="right">
-<div class="log" id="log">>> System Ready...</div>
+<div class="log" id="log">>> Ready...</div>
 </div>
 
 </div>
@@ -151,130 +134,130 @@ button:hover {
 <script>
 
 // CLOCK
-setInterval(() => {
+setInterval(()=>{
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
-}, 1000);
+},1000);
 
 // BUTTON
 document.getElementById("calcBtn").addEventListener("click", calculate);
 
 
-// ✨ TYPE EFFECT
-function typeLog(text, speed = 15) {
-  let i = 0;
-  let output = document.getElementById("log");
-  output.innerText = "";
-
-  function typing() {
-    if (i < text.length) {
-      output.innerText += text.charAt(i);
-      i++;
-      setTimeout(typing, speed);
+// TYPE EFFECT
+function typeLog(text, speed=10){
+  let i=0;
+  let out=document.getElementById("log");
+  out.innerText="";
+  function t(){
+    if(i<text.length){
+      out.innerText+=text[i++];
+      setTimeout(t,speed);
     }
   }
-
-  typing();
+  t();
 }
 
 
 // SIMULATION
-function calculate() {
+function calculate(){
 
-  let log = ">> Initializing simulation...\n";
+let log=">> Init...\n";
 
-  let L = parseInt(document.getElementById("level").value) || 1;
-  let E = parseInt(document.getElementById("endurance").value) || 1;
-  let Luck = parseInt(document.getElementById("luck").value) || 1;
-  let S = parseInt(document.getElementById("stim").value) || 0;
-  let R = parseInt(document.getElementById("rad").value) || 0;
-  let minW = parseInt(document.getElementById("weaponMin").value) || 1;
-  let maxW = parseInt(document.getElementById("weaponMax").value) || 1;
-  let bufferVal = parseInt(document.getElementById("buffer").value) || 30;
+let L=+level.value||1;
+let E=+endurance.value||1;
+let Luck=+luck.value||1;
+let S=+stim.value||0;
+let R=+rad.value||0;
+let minW=+weaponMin.value||1;
+let maxW=+weaponMax.value||1;
+let buffer=+buffer.value||30;
 
-  let playerDPS = (minW + maxW) / 2;
-  if (playerDPS < 5) playerDPS = 5;
+// HP (lebih realistis)
+let hpPerLevel = 2.5 + (E * 0.5);
+let maxHP = 105 + (L * hpPerLevel);
+let hp=maxHP;
 
-  let critChance = Math.min(0.1 + Luck * 0.02, 0.5);
-  let dodgeChance = Math.min(0.05 + Luck * 0.015, 0.4);
+// DPS
+let dps=(minW+maxW)/2;
+if(dps<3)dps=3;
 
-  let maxHP = 120 + (L * 12) + (E * 25);
-  let hp = maxHP;
+// LUCK
+let crit = Math.min(0.1 + Luck*0.02,0.5);
+let dodge = Math.min(0.05 + Luck*0.015,0.4);
 
-  let stim = S;
-  let rad = R;
-  let time = 0;
+let stim=S;
+let rad=R;
+let time=0;
 
-  log += ">> HP: " + maxHP + "\n";
-  log += ">> DPS: " + playerDPS + "\n";
-  log += ">> Crit: " + Math.floor(critChance*100) + "%\n";
-  log += ">> Dodge: " + Math.floor(dodgeChance*100) + "%\n\n";
+log+="HP:"+Math.floor(maxHP)+"\n";
+log+="DPS:"+dps+"\n\n";
 
-  while (hp > 0 && time < 200000) {
+while(hp>0 && time<200000){
 
-    let minute = time / 60;
-    let difficulty = 1 + (minute * 0.02);
+let minute=time/60;
+let diff=1+(minute*0.015);
 
-    let rand = Math.random();
+let rand=Math.random();
 
-    let enemyHP = rand < 0.5 ? 25 : rand < 0.8 ? 45 : 70;
-    let enemyDPS = rand < 0.5 ? 1 : rand < 0.8 ? 2 : 3.5;
+let enemyHP = rand<0.6?20:rand<0.85?35:55;
+let enemyDPS = rand<0.6?1:rand<0.85?1.8:3;
 
-    enemyHP *= difficulty;
-    enemyDPS *= difficulty;
+enemyHP*=diff;
+enemyDPS*=diff;
 
-    let damageMultiplier = Math.random() < critChance ? 2 : 1;
+let mult = Math.random()<crit?2:1;
 
-    let fightTime = enemyHP / (playerDPS * damageMultiplier);
-    if (fightTime > 8) fightTime = 8;
+let fight = enemyHP/(dps*mult);
+if(fight>7)fight=7;
 
-    let damage = enemyDPS * fightTime;
+let dmg = enemyDPS*fight;
 
-    if (Math.random() < dodgeChance) {
-      damage = 0;
-      log += ">> Dodge!\n";
-    }
+if(Math.random()<dodge){
+  dmg=0;
+  log+="dodge\n";
+}
 
-    hp -= damage;
+hp-=dmg;
 
-    if (hp < maxHP * 0.35 && stim > 0) {
-      hp += 120;
-      stim--;
-      log += ">> Stimpack used\n";
-    }
+if(hp<maxHP*0.35 && stim>0){
+  hp+=100;
+  stim--;
+  log+="stim\n";
+}
 
-    if (hp < maxHP * 0.6 && rad > 0) {
-      hp += 60;
-      rad--;
-      log += ">> RadAway used\n";
-    }
+if(hp<maxHP*0.6 && rad>0){
+  hp+=50;
+  rad--;
+  log+="rad\n";
+}
 
-    let idle = 5 + Math.random() * 15;
-    time += fightTime + idle;
+let idle=6+Math.random()*12;
+time+=fight+idle;
 
-    log += ">> Time: " + Math.floor(time/60) + "m | HP: " + Math.floor(hp) + "\n";
+log+="t:"+Math.floor(time/60)+"m hp:"+Math.floor(hp)+"\n";
 
-    if (hp <= 0) break;
-  }
+if(hp<=0)break;
+}
 
-  let survival = Math.floor(time / 60);
-  if (survival < 1) survival = 1;
+// RESULT
+let survive=Math.floor(time/60);
+if(survive<1)survive=1;
 
-  let now = new Date();
-  let death = new Date(now.getTime() + survival * 60000);
+let now=new Date();
+let death=new Date(now.getTime()+survive*60000);
 
-  let notif = survival - bufferVal;
-  if (notif < 1) notif = 1;
+let notif=survive-buffer;
+if(notif<1)notif=1;
 
-  let notifTime = new Date(now.getTime() + notif * 60000);
+let notifTime=new Date(now.getTime()+notif*60000);
 
-  log += "\n>> RESULT\n";
-  log += ">> Survival: " + survival + " minutes\n";
-  log += ">> Death: " + death.toLocaleString() + "\n";
-  log += ">> Alert: " + notifTime.toLocaleString();
+log+="\nRESULT\n";
+log+="survive:"+survive+"m\n";
+log+="death:"+death.toLocaleString()+"\n";
+log+="alert:"+notifTime.toLocaleString();
 
-  // ✨ tampilkan dengan efek ketik
-  typeLog(log, 10);
+typeLog(log,8);
+
 }
 
 </script>
