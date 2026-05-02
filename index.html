@@ -5,11 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<!-- 🔥 PWA FULLSCREEN SUPPORT -->
+<!-- PWA MODE -->
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <title>Dwellers Tracker</title>
 
@@ -22,7 +21,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden; /* 🔥 lock scroll */
+  overflow: hidden;
   font-family: "Courier New", monospace;
   background: black;
   color: #00ff88;
@@ -30,27 +29,27 @@ html, body {
 
 /* HEADER */
 .header {
-  height: 60px;
+  height: 55px;
   padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .clock {
-  font-size: 12px;
+  font-size: 11px;
 }
 
-/* MAIN WRAPPER */
+/* MAIN */
 .wrapper {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 55px);
   padding: 10px;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* INPUT PANEL */
@@ -62,10 +61,10 @@ html, body {
 
 input {
   padding: 8px;
+  font-size: 13px;
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
-  font-size: 13px;
 }
 
 button {
@@ -73,22 +72,19 @@ button {
   background: #003311;
   border: 1px solid #00ff88;
   color: #00ff88;
-  font-size: 14px;
-  cursor: pointer;
 }
 
-/* 🔥 LOG WINDOW FIXED */
+/* 🔥 FIX LOG WINDOW (TIDAK FULL BAWAH LAGI) */
 .log {
-  flex: 1;
-  border: 1px solid #00ff88;
-  padding: 10px;
+  height: 45vh;          /* 🔥 FIX UTAMA */
   overflow-y: auto;
-  white-space: pre-line;
+  border: 1px solid #00ff88;
+  padding: 8px;
   font-size: 12px;
   background: rgba(0,255,136,0.05);
 }
 
-/* scroll bar */
+/* scrollbar */
 .log::-webkit-scrollbar {
   width: 4px;
 }
@@ -119,7 +115,7 @@ button {
 <input id="weaponMax" placeholder="Weapon Max">
 <input id="buffer" placeholder="Notif Buffer" value="30">
 
-<button id="activateBtn">ACTIVATE</button>
+<button id="btn">ACTIVATE</button>
 
 </div>
 
@@ -136,7 +132,7 @@ setInterval(()=>{
 },1000);
 
 
-// TYPE LOG SAFE
+// TYPE LOG
 function typeLog(text){
   let i = 0;
   const el = document.getElementById("log");
@@ -145,7 +141,7 @@ function typeLog(text){
   function step(){
     if(i < text.length){
       el.innerText += text[i++];
-      el.scrollTop = el.scrollHeight; // auto scroll
+      el.scrollTop = el.scrollHeight;
       setTimeout(step, 5);
     }
   }
@@ -153,71 +149,62 @@ function typeLog(text){
 }
 
 
-// 🔥 FIXED EVENT BIND (INI YANG BIKIN TOMBOL MATI SEBELUMNYA)
-window.addEventListener("load", () => {
-  document.getElementById("activateBtn").addEventListener("click", runSim);
-});
+// BUTTON SAFE BIND
+window.onload = () => {
+  document.getElementById("btn").addEventListener("click", simulate);
+};
 
 
-// SIMULATION CORE (REALISTIC MODEL)
-function runSim(){
+// SIMULATION CORE (STABLE MODEL)
+function simulate(){
 
 let log = ">> SIMULATION START\n\n";
 
-// INPUT SAFE
-let L = Number(document.getElementById("level").value) || 1;
-let E = Number(document.getElementById("endurance").value) || 1;
-let Luck = Number(document.getElementById("luck").value) || 1;
-let S = Number(document.getElementById("stim").value) || 0;
-let R = Number(document.getElementById("rad").value) || 0;
-let minW = Number(document.getElementById("weaponMin").value) || 1;
-let maxW = Number(document.getElementById("weaponMax").value) || 1;
-let buffer = Number(document.getElementById("buffer").value) || 30;
+let L = Number(level.value) || 1;
+let E = Number(endurance.value) || 1;
+let Luck = Number(luck.value) || 1;
+let S = Number(stim.value) || 0;
+let R = Number(rad.value) || 0;
+let minW = Number(weaponMin.value) || 1;
+let maxW = Number(weaponMax.value) || 1;
+let buffer = Number(buffer.value) || 30;
 
-// HP MODEL (STABLE)
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
-// BASE DAMAGE (REAL DATA BASED)
 let baseDamage = 0.6;
-
-// LUCK SYSTEM
-let crit = 0.08 + Luck * 0.015;
-let dodge = 0.03 + Luck * 0.01;
 
 let stim = S;
 let rad = R;
 let time = 0;
 
-log += "HP: " + Math.floor(hp) + "\n";
-log += "BASE DMG: " + baseDamage + "\n\n";
+let crit = 0.08 + Luck * 0.015;
+let dodge = 0.03 + Luck * 0.01;
+
+log += "HP: " + Math.floor(hp) + "\n\n";
 
 while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 
-// SLOW SCALING
 let scaling = 1 + (minute * 0.006);
 let dmgRate = baseDamage * scaling;
 
-// ENCOUNTER (LOW FREQUENCY)
-if(Math.random() > 0.28){
+// encounter jarang
+if(Math.random() > 0.3){
   time += 12 + Math.random()*18;
   log += "idle...\n";
   continue;
 }
 
-// FIGHT
 let fightTime = 2 + Math.random()*3;
 let dmg = dmgRate * fightTime;
 
-// CRIT
 if(Math.random() < crit){
   dmg *= 1.4;
   log += "crit!\n";
 }
 
-// DODGE
 if(Math.random() < dodge){
   dmg = 0;
   log += "dodged!\n";
@@ -225,7 +212,6 @@ if(Math.random() < dodge){
 
 hp -= dmg;
 
-// HEAL
 if(hp < maxHP*0.4 && stim > 0){
   hp += 80;
   stim--;
@@ -238,7 +224,6 @@ if(hp < maxHP*0.6 && rad > 0){
   log += "rad\n";
 }
 
-// TIME
 time += fightTime + (10 + Math.random()*15);
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
@@ -246,22 +231,15 @@ log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 if(hp <= 0) break;
 }
 
-// RESULT
 let survive = Math.floor(time/60);
 if(survive < 1) survive = 1;
 
 let now = new Date();
-let death = new Date(now.getTime() + survive * 60000);
-
-let notif = survive - buffer;
-if(notif < 1) notif = 1;
-
-let alert = new Date(now.getTime() + notif * 60000);
+let death = new Date(now.getTime() + survive*60000);
 
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
-log += "death: " + death.toLocaleString() + "\n";
-log += "alert: " + alert.toLocaleString();
+log += "death: " + death.toLocaleString();
 
 typeLog(log);
 
