@@ -7,19 +7,18 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #ffffff;
-  color: #000;
   margin: 0;
+  font-family: "Courier New", monospace;
+  background: #000;
+  color: #00ff88;
 }
 
 .header {
-  background: #2563eb;
-  color: white;
+  background: #001a0d;
   padding: 15px;
+  font-size: 20px;
   text-align: center;
-  font-size: 22px;
-  font-weight: bold;
+  border-bottom: 1px solid #00ff88;
   position: relative;
 }
 
@@ -27,45 +26,51 @@ body {
   position: absolute;
   right: 15px;
   top: 15px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.container {
-  max-width: 500px;
-  margin: auto;
+.main {
+  display: flex;
+  height: calc(100vh - 60px);
+}
+
+.left {
+  width: 300px;
   padding: 20px;
+  border-right: 1px solid #00ff88;
 }
 
-.card {
-  background: #f1f5f9;
-  padding: 15px;
-  border-radius: 12px;
+.right {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 input {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: black;
+  color: #00ff88;
+  border: 1px solid #00ff88;
 }
 
 button {
   width: 100%;
-  padding: 12px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
+  padding: 10px;
+  background: #003311;
+  color: #00ff88;
+  border: 1px solid #00ff88;
   cursor: pointer;
 }
 
-.result {
-  background: #e2e8f0;
-  padding: 10px;
-  border-radius: 10px;
-  margin-top: 10px;
+button:hover {
+  background: #005522;
+}
+
+.log {
+  white-space: pre-line;
+  font-size: 13px;
 }
 </style>
 </head>
@@ -73,16 +78,15 @@ button {
 <body>
 
 <div class="header">
-  Dwellers Tracker
+  Dwellers Tracker Terminal
   <div class="clock" id="clock"></div>
 </div>
 
-<div class="container">
+<div class="main">
 
-<div class="card">
-
+<div class="left">
 <label>Level</label>
-<input type="number" id="level" placeholder="contoh: 10">
+<input type="number" id="level">
 
 <label>Endurance</label>
 <input type="number" id="endurance">
@@ -93,58 +97,62 @@ button {
 <label>RadAway</label>
 <input type="number" id="rad">
 
-<label>Weapon Min Damage</label>
+<label>Weapon Min</label>
 <input type="number" id="weaponMin">
 
-<label>Weapon Max Damage</label>
+<label>Weapon Max</label>
 <input type="number" id="weaponMax">
 
-<label>Notif sebelum mati (menit)</label>
+<label>Notif Buffer (min)</label>
 <input type="number" id="buffer" value="30">
 
-<button onclick="calculate()">Calculate</button>
-
-<div class="result" id="output"></div>
-
+<button id="calcBtn">RUN SIMULATION</button>
 </div>
+
+<div class="right">
+<div class="log" id="log">>> System Ready...</div>
+</div>
+
 </div>
 
 <script>
 
-// ⏰ JAM REALTIME
-function updateClock() {
-  document.getElementById("clock").innerHTML =
+// ⏰ CLOCK
+setInterval(() => {
+  document.getElementById("clock").innerText =
     new Date().toLocaleString();
-}
-setInterval(updateClock, 1000);
-updateClock();
+}, 1000);
 
 
-// 🔥 SIMULASI (SUDAH FIX)
+// 🎯 BUTTON EVENT (ANTI BUG)
+document.getElementById("calcBtn").addEventListener("click", calculate);
+
+
+// 🧠 SIMULATION
 function calculate() {
 
-  let L = +document.getElementById("level").value || 1;
-  let E = +document.getElementById("endurance").value || 1;
-  let S = +document.getElementById("stim").value || 0;
-  let R = +document.getElementById("rad").value || 0;
-  let minW = +document.getElementById("weaponMin").value || 1;
-  let maxW = +document.getElementById("weaponMax").value || 1;
-  let bufferVal = +document.getElementById("buffer").value || 30;
+  let log = ">> Initializing simulation...\n";
 
-  // 🔫 weapon avg damage
+  let L = parseInt(document.getElementById("level").value) || 1;
+  let E = parseInt(document.getElementById("endurance").value) || 1;
+  let S = parseInt(document.getElementById("stim").value) || 0;
+  let R = parseInt(document.getElementById("rad").value) || 0;
+  let minW = parseInt(document.getElementById("weaponMin").value) || 1;
+  let maxW = parseInt(document.getElementById("weaponMax").value) || 1;
+  let bufferVal = parseInt(document.getElementById("buffer").value) || 30;
+
   let playerDPS = (minW + maxW) / 2;
-
-  // 🔥 biar ga terlalu lemah
   if (playerDPS < 5) playerDPS = 5;
 
-  // ❤️ HP system
   let maxHP = 120 + (L * 12) + (E * 25);
   let hp = maxHP;
 
   let stim = S;
   let rad = R;
-
   let time = 0;
+
+  log += ">> HP: " + maxHP + "\n";
+  log += ">> DPS: " + playerDPS + "\n\n";
 
   while (hp > 0 && time < 200000) {
 
@@ -160,29 +168,27 @@ function calculate() {
     enemyDPS *= difficulty;
 
     let fightTime = enemyHP / playerDPS;
-
-    // 🔥 limit biar realistis
     if (fightTime > 8) fightTime = 8;
 
     let damage = enemyDPS * fightTime;
     hp -= damage;
 
-    // 💉 stimpack
     if (hp < maxHP * 0.35 && stim > 0) {
       hp += 120;
       stim--;
+      log += ">> Stimpack used\n";
     }
 
-    // ☢️ radaway
     if (hp < maxHP * 0.6 && rad > 0) {
       hp += 60;
       rad--;
+      log += ">> RadAway used\n";
     }
 
-    // 💤 jeda antar fight
     let idle = Math.random() * 5;
-
     time += fightTime + idle;
+
+    log += ">> Time: " + Math.floor(time/60) + "m | HP: " + Math.floor(hp) + "\n";
 
     if (hp <= 0) break;
   }
@@ -191,7 +197,6 @@ function calculate() {
   if (survival < 1) survival = 1;
 
   let now = new Date();
-
   let death = new Date(now.getTime() + survival * 60000);
 
   let notif = survival - bufferVal;
@@ -199,10 +204,12 @@ function calculate() {
 
   let notifTime = new Date(now.getTime() + notif * 60000);
 
-  document.getElementById("output").innerHTML =
-    "⏱ Bertahan: <b>" + survival + " menit</b><br><br>" +
-    "💀 Estimasi mati:<br><b>" + death.toLocaleString() + "</b><br><br>" +
-    "🔔 Notif:<br><b>" + notifTime.toLocaleString() + "</b>";
+  log += "\n>> RESULT\n";
+  log += ">> Survival: " + survival + " minutes\n";
+  log += ">> Death: " + death.toLocaleString() + "\n";
+  log += ">> Alert: " + notifTime.toLocaleString();
+
+  document.getElementById("log").innerText = log;
 }
 
 </script>
