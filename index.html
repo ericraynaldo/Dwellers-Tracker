@@ -11,6 +11,9 @@
 
 <title>Dwellers Tracker V1.0</title>
 
+<!-- 🔥 PWA MANIFEST -->
+<link rel="manifest" href="manifest.json">
+
 <style>
 
 * {
@@ -20,52 +23,31 @@
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
   background: black;
   color: #00ff88;
   font-family: "Courier New", monospace;
-
-  /* 🔥 FIX: allow scroll but clean */
-  overflow-y: auto;
+  min-height: 100vh;
 }
 
-/* SAFE AREA FIX FOR ANDROID / IPHONE */
-body {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* MAIN APP */
+/* APP LAYOUT */
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* HEADER (NAIK DI HP) */
+/* HEADER */
 .header {
   padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
-
   position: sticky;
   top: 0;
-  z-index: 10;
 }
 
-.title {
-  font-size: 15px;
-}
-
-.version {
-  font-size: 11px;
-  opacity: 0.8;
-  margin-top: 2px;
-}
-
-.clock {
-  font-size: 11px;
-  margin-top: 3px;
-}
+.title { font-size: 15px; }
+.version { font-size: 11px; opacity: 0.8; }
+.clock { font-size: 11px; }
 
 /* INPUT */
 .input-section {
@@ -92,37 +74,23 @@ button {
 
 /* LOG WINDOW */
 .log {
+  flex: 1;
   margin: 0 10px;
-  height: 45vh; /* 🔥 fixed middle window */
   border: 1px solid #00ff88;
   padding: 8px;
   overflow-y: auto;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
+  min-height: 200px;
 }
 
-/* SCROLL BAR */
-.log::-webkit-scrollbar {
-  width: 4px;
-}
-.log::-webkit-scrollbar-thumb {
-  background: #00ff88;
-}
-
-/* FOOTER (FIX NAIK + TIDAK TERLALU TURUN) */
+/* FOOTER */
 .footer {
-  margin-top: 10px;
   padding: 10px;
   text-align: center;
-
   border-top: 2px solid #00ff88;
   background: #001a0d;
-
   font-size: 11px;
-
-  /* 🔥 penting biar tidak “jatuh ke bawah layar” */
-  position: relative;
-  bottom: 0;
 }
 
 </style>
@@ -150,7 +118,7 @@ button {
 <input id="rad" placeholder="RadAway">
 <input id="weaponMin" placeholder="Weapon Min">
 <input id="weaponMax" placeholder="Weapon Max">
-<input id="buffer" placeholder="Notif Buffer" value="30">
+<input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
 <button id="btn">ACTIVATE</button>
 
@@ -168,14 +136,17 @@ button {
 
 <script>
 
-// CLOCK
-setInterval(()=>{
+/* CLOCK */
+setInterval(() => {
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
-},1000);
+}, 1000);
 
+/* SAFE INPUT */
+const val = (id) =>
+  Number(document.getElementById(id)?.value || 0);
 
-// TYPE LOG
+/* TYPE LOG */
 function typeLog(text){
   let i = 0;
   const el = document.getElementById("log");
@@ -191,24 +162,26 @@ function typeLog(text){
   step();
 }
 
+/* FIXED BUTTON (ANTI BUG HP + GITHUB) */
+document.addEventListener("DOMContentLoaded", () => {
 
-// BUTTON
-window.onload = () => {
-  document.getElementById("btn").addEventListener("click", simulate);
-};
+  const btn = document.getElementById("btn");
 
+  btn.addEventListener("click", simulate);
 
-// SIMULATION CORE
+});
+
+/* SIMULATION CORE */
 function simulate(){
 
 let log = ">> SIMULATION START\n\n";
 
-let L = Number(level.value) || 1;
-let E = Number(endurance.value) || 1;
-let Luck = Number(luck.value) || 1;
-let S = Number(stim.value) || 0;
-let R = Number(rad.value) || 0;
-let buffer = Number(buffer.value) || 30;
+let L = val("level") || 1;
+let E = val("endurance") || 1;
+let Luck = val("luck") || 1;
+let S = val("stim") || 0;
+let R = val("rad") || 0;
+let buffer = val("buffer") || 30;
 
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
@@ -273,8 +246,7 @@ if(hp <= 0) break;
 let survive = Math.floor(time/60);
 if(survive < 1) survive = 1;
 
-let now = new Date();
-let death = new Date(now.getTime() + survive*60000);
+let death = new Date(Date.now() + survive * 60000);
 
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
