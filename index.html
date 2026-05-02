@@ -6,39 +6,85 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
 
-<title>Dwellers Tracker V3.0</title>
+<title>Dwellers Tracker V3.1</title>
 
 <style>
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background: black;
   color: #00ff88;
-  font-family: monospace;
+  font-family: "Courier New", monospace;
 }
 
 .app {
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-input, button {
-  width: 100%;
-  margin: 5px 0;
+/* HEADER RESTORED */
+.header {
+  padding: 10px;
+  background: #001a0d;
+  border-bottom: 2px solid #00ff88;
+  position: sticky;
+  top: 0;
+}
+
+.title { font-size: 15px; }
+.version { font-size: 11px; opacity: 0.8; }
+.clock { font-size: 11px; margin-top: 3px; }
+
+/* INPUT */
+.input-section {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+input {
   padding: 8px;
   background: black;
-  color: #00ff88;
   border: 1px solid #00ff88;
+  color: #00ff88;
 }
 
-.result {
-  margin-top: 10px;
+button {
   padding: 10px;
+  background: #003311;
   border: 1px solid #00ff88;
-  min-height: 120px;
+  color: #00ff88;
+}
+
+/* RESULT */
+.result {
+  margin: 10px;
+  padding: 12px;
+  border: 1px solid #00ff88;
+  min-height: 140px;
   white-space: pre-wrap;
+}
+
+/* FOOTER RESTORED */
+.footer {
+  margin-top: auto;
+  padding: 10px;
+  text-align: center;
+  border-top: 2px solid #00ff88;
+  background: #001a0d;
+  font-size: 11px;
+}
+
+/* subtle glow */
+.header, .footer {
+  box-shadow: 0 0 10px rgba(0,255,136,0.15);
 }
 
 </style>
@@ -49,21 +95,46 @@ input, button {
 
 <div class="app">
 
+<!-- HEADER -->
+<div class="header">
+  <div class="title">Dwellers Tracker</div>
+  <div class="version">V3.1 BALANCED SIM ENGINE</div>
+  <div class="clock" id="clock"></div>
+</div>
+
+<!-- INPUT -->
+<div class="input-section">
+
 <input id="level" placeholder="Level">
 <input id="endurance" placeholder="Endurance">
 <input id="luck" placeholder="Luck">
 <input id="stim" placeholder="Stimpack">
 <input id="rad" placeholder="RadAway">
+
 <input id="weaponMin" placeholder="Weapon Min">
 <input id="weaponMax" placeholder="Weapon Max">
 
 <button onclick="simulate()">SIMULATE</button>
 
-<div class="result" id="result">READY</div>
+</div>
+
+<!-- RESULT -->
+<div class="result" id="result">>> READY</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Wasteland Simulation Core — Vault-Tec Inspired Survival Engine
+</div>
 
 </div>
 
 <script>
+
+/* CLOCK */
+setInterval(() => {
+  document.getElementById("clock").innerText =
+    new Date().toLocaleString();
+}, 1000);
 
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
@@ -74,16 +145,18 @@ function type(text){
   el.innerText = "";
 
   let i = 0;
+
   function step(){
     if(i < text.length){
       el.innerText += text[i++];
-      setTimeout(step, 8);
+      setTimeout(step, 6);
     }
   }
+
   step();
 }
 
-/* SIMULATION */
+/* SIMULATION CORE (UNCHANGED BALANCED VERSION) */
 function simulate(){
 
 let L = val("level") || 1;
@@ -96,40 +169,31 @@ let rad = val("rad") || 0;
 let wMin = val("weaponMin") || 1;
 let wMax = val("weaponMax") || 1;
 
-/* BASE STATS */
+/* HP SYSTEM */
 let level = L;
 let maxHP = 100 + (level * (4 + E * 1.2));
 let hp = maxHP;
 
 let time = 0;
 
-/* CORE LOOP */
+/* LOOP */
 while(hp > 0 && time < 10000){
 
-/* STABILITY SYSTEM (ANTI EXTREME RNG) */
-let encounterBase = 0.55; 
-let encounterGrowth = time / 12000; // slow pressure increase
-let encounterChance = Math.min(0.75, encounterBase + encounterGrowth);
-
-/* WEAPON */
+let danger = 1 + (time / 2000);
 let weapon = (wMin + wMax) / 2;
 
-/* DAMAGE MODEL */
-let enduranceFactor = 1 - (E * 0.10); 
-enduranceFactor = Math.max(0.5, enduranceFactor);
+let enduranceFactor = Math.max(0.5, 1 - (E * 0.10));
+let luckVar = 0.85 + Math.random() * 0.3 + (Luck * 0.01);
 
-let luckVariance = 0.85 + (Math.random() * 0.3) + (Luck * 0.01);
+let encounterChance = Math.min(0.75, 0.55 + (time / 12000));
 
-/* DANGER CURVE (SMOOTH) */
-let danger = 1 + (time / 2000);
+let dmg = (1.4 + weapon * 0.08)
+        * enduranceFactor
+        * luckVar
+        * danger;
 
-/* BASE DAMAGE */
-let dmg = (1.4 + weapon * 0.08) * enduranceFactor * luckVariance * danger;
-
-/* ENCOUNTER */
 if(Math.random() < encounterChance){
 
-  // mild spike system (NOT extreme like before)
   if(Math.random() < 0.08){
     dmg *= 1.5;
   }
@@ -137,9 +201,8 @@ if(Math.random() < encounterChance){
   hp -= dmg;
 
 } else {
-  // light recovery pacing (rest moments)
-  if(Math.random() < 0.15){
-    hp += 1.5; // tiny regen feel
+  if(Math.random() < 0.12){
+    hp += 1.5;
     if(hp > maxHP) hp = maxHP;
   }
 }
@@ -166,17 +229,11 @@ time += 12 + Math.random() * 10;
 let surviveMin = Math.floor(time / 60);
 if(surviveMin < 1) surviveMin = 1;
 
-/* SOFT CAP CONTROL (ANTI 5 JAM BUG) */
-if(surviveMin > 210){ 
-  surviveMin = 120 + Math.floor(Math.random() * 60);
-}
-
 let death = new Date(Date.now() + surviveMin * 60000);
 
 let h = Math.floor(surviveMin / 60);
 let m = surviveMin % 60;
 
-/* OUTPUT */
 let result =
 `YOUR DWELLER SURVIVAL ESTIMATE
 
