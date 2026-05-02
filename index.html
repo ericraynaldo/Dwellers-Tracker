@@ -7,7 +7,7 @@
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: #ffffff;
   color: #000;
   margin: 0;
@@ -58,6 +58,7 @@ button {
   border: none;
   border-radius: 10px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .result {
@@ -65,16 +66,6 @@ button {
   padding: 10px;
   border-radius: 10px;
   margin-top: 10px;
-}
-
-.links {
-  margin-top: 15px;
-}
-
-.links a {
-  display: block;
-  margin-bottom: 5px;
-  color: #2563eb;
 }
 </style>
 </head>
@@ -91,7 +82,7 @@ button {
 <div class="card">
 
 <label>Level</label>
-<input type="number" id="level">
+<input type="number" id="level" placeholder="contoh: 10">
 
 <label>Endurance</label>
 <input type="number" id="endurance">
@@ -102,10 +93,10 @@ button {
 <label>RadAway</label>
 <input type="number" id="rad">
 
-<label>Weapon Min</label>
+<label>Weapon Min Damage</label>
 <input type="number" id="weaponMin">
 
-<label>Weapon Max</label>
+<label>Weapon Max Damage</label>
 <input type="number" id="weaponMax">
 
 <label>Notif sebelum mati (menit)</label>
@@ -115,41 +106,38 @@ button {
 
 <div class="result" id="output"></div>
 
-<div class="links">
-  <b>Referensi Data:</b>
-  <a href="https://fallout.fandom.com/wiki/Fallout_Shelter" target="_blank">Fallout Wiki</a>
-  <a href="https://fallout.fandom.com/wiki/Weapons_(Fallout_Shelter)" target="_blank">Weapon Database</a>
-</div>
-
 </div>
 </div>
 
 <script>
 
-// ⏰ CLOCK
+// ⏰ JAM REALTIME
 function updateClock() {
   document.getElementById("clock").innerHTML =
     new Date().toLocaleString();
 }
 setInterval(updateClock, 1000);
+updateClock();
 
 
-// 🔥 SIMULATION FIXED
+// 🔥 SIMULASI (SUDAH FIX)
 function calculate() {
 
-  let L = +level.value || 1;
-  let E = +endurance.value || 1;
-  let S = +stim.value || 0;
-  let R = +rad.value || 0;
-  let minW = +weaponMin.value || 1;
-  let maxW = +weaponMax.value || 1;
-  let buffer = +buffer.value || 30;
+  let L = +document.getElementById("level").value || 1;
+  let E = +document.getElementById("endurance").value || 1;
+  let S = +document.getElementById("stim").value || 0;
+  let R = +document.getElementById("rad").value || 0;
+  let minW = +document.getElementById("weaponMin").value || 1;
+  let maxW = +document.getElementById("weaponMax").value || 1;
+  let bufferVal = +document.getElementById("buffer").value || 30;
 
+  // 🔫 weapon avg damage
   let playerDPS = (minW + maxW) / 2;
 
-  // 🔥 FIX MIN DPS
+  // 🔥 biar ga terlalu lemah
   if (playerDPS < 5) playerDPS = 5;
 
+  // ❤️ HP system
   let maxHP = 120 + (L * 12) + (E * 25);
   let hp = maxHP;
 
@@ -173,25 +161,25 @@ function calculate() {
 
     let fightTime = enemyHP / playerDPS;
 
-    // 🔥 LIMIT BIAR GA OVER
+    // 🔥 limit biar realistis
     if (fightTime > 8) fightTime = 8;
 
     let damage = enemyDPS * fightTime;
-
     hp -= damage;
 
-    // 💉 HEAL LOGIC
+    // 💉 stimpack
     if (hp < maxHP * 0.35 && stim > 0) {
       hp += 120;
       stim--;
     }
 
+    // ☢️ radaway
     if (hp < maxHP * 0.6 && rad > 0) {
       hp += 60;
       rad--;
     }
 
-    // 🔥 JEDA ANTAR FIGHT
+    // 💤 jeda antar fight
     let idle = Math.random() * 5;
 
     time += fightTime + idle;
@@ -206,31 +194,15 @@ function calculate() {
 
   let death = new Date(now.getTime() + survival * 60000);
 
-  let notif = survival - buffer;
+  let notif = survival - bufferVal;
   if (notif < 1) notif = 1;
 
   let notifTime = new Date(now.getTime() + notif * 60000);
 
-  output.innerHTML =
+  document.getElementById("output").innerHTML =
     "⏱ Bertahan: <b>" + survival + " menit</b><br><br>" +
-    "💀 Mati: <b>" + death.toLocaleString() + "</b><br><br>" +
-    "🔔 Notif: <b>" + notifTime.toLocaleString() + "</b>";
-
-  startNotification(notif);
-}
-
-
-// 🔔 NOTIF
-function startNotification(min) {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-
-  setTimeout(() => {
-    new Notification("⚠️ Recall Dweller!", {
-      body: "Sudah mendekati batas aman!"
-    });
-  }, min * 60000);
+    "💀 Estimasi mati:<br><b>" + death.toLocaleString() + "</b><br><br>" +
+    "🔔 Notif:<br><b>" + notifTime.toLocaleString() + "</b>";
 }
 
 </script>
