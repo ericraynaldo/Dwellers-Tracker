@@ -119,107 +119,130 @@ setInterval(()=>{
 },1000);
 
 
-// BUTTON FIX (INI YANG SERING BIKIN ERROR)
-document.getElementById("btnActivate").addEventListener("click", simulate);
+// TYPEWRITER LOG (INI YANG HILANG SEBELUMNYA)
+function typeLog(text){
+  let i = 0;
+  let out = document.getElementById("log");
+  out.innerText = "";
 
-
-// LOG FUNCTION
-function printLog(text){
-  document.getElementById("log").innerText = text;
+  function step(){
+    if(i < text.length){
+      out.innerText += text[i++];
+      setTimeout(step, 8);
+    }
+  }
+  step();
 }
 
 
-// SIMULATION CORE
+// BUTTON
+document.getElementById("btnActivate").addEventListener("click", simulate);
+
+
+// SIMULATION FIXED MODEL
 function simulate(){
 
-let log=">> WASTELAND SIMULATION STARTED\n\n";
+let log = ">> WASTELAND SIMULATION (STABLE MODEL)\n\n";
 
-// INPUT (AMAN - SEMUA DI-CHECK)
-let L = Number(document.getElementById("level").value) || 1;
-let E = Number(document.getElementById("endurance").value) || 1;
-let Luck = Number(document.getElementById("luck").value) || 1;
-let S = Number(document.getElementById("stim").value) || 0;
-let R = Number(document.getElementById("rad").value) || 0;
-let minW = Number(document.getElementById("weaponMin").value) || 1;
-let maxW = Number(document.getElementById("weaponMax").value) || 1;
-let buffer = Number(document.getElementById("buffer").value) || 30;
+// INPUT
+let L = Number(level.value) || 1;
+let E = Number(endurance.value) || 1;
+let Luck = Number(luck.value) || 1;
+let S = Number(stim.value) || 0;
+let R = Number(rad.value) || 0;
+let minW = Number(weaponMin.value) || 1;
+let maxW = Number(weaponMax.value) || 1;
+let buffer = Number(buffer.value) || 30;
 
-// HP MODEL (REALISTIC BASED ON YOUR DATA)
-let hpPerLevel = 2.5 + (E * 0.5);
-let maxHP = 105 + (L * hpPerLevel);
+
+// HP MODEL (FIXED)
+let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
 // DPS
 let dps = (minW + maxW) / 2;
-if(dps < 2) dps = 2;
+if(dps < 1) dps = 1;
 
-// LUCK SYSTEM
-let crit = Math.min(0.1 + Luck*0.02, 0.35);
-let dodge = Math.min(0.05 + Luck*0.01, 0.25);
+// LUCK
+let crit = 0.08 + Luck * 0.015;
+let dodge = 0.03 + Luck * 0.01;
 
-// BASE DAMAGE FROM REAL SAVE DATA (~0.9 HP/min)
-let baseDamage = 0.9;
+// BASE DAMAGE (FROM YOUR REAL DATA)
+let baseDamagePerMin = 0.6; // 🔥 DIPERLAMBAT dari 0.9
 
 let stim = S;
 let rad = R;
 let time = 0;
 
-log += "HP: " + Math.floor(maxHP) + "\n";
-log += "BASE DMG: " + baseDamage + "/min\n\n";
+log += "HP START: " + Math.floor(maxHP) + "\n";
+log += "BASE DMG: " + baseDamagePerMin + "/min\n\n";
+
 
 while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 
-// SLOW SCALING (REALISTIC)
-let scaling = 1 + (minute * 0.01);
-let dmgRate = baseDamage * scaling;
+// 🔥 SLOW SCALING (FIXED, LAMBAT)
+let scaling = 1 + (minute * 0.006);
+let damageRate = baseDamagePerMin * scaling;
 
-// ENCOUNTER CHANCE
-if(Math.random() > 0.45){
-  time += 10 + Math.random()*20;
+
+// 🔥 ENCOUNTER SYSTEM (JARANG)
+let encounterChance = 0.25; // lebih aman
+
+if(Math.random() > encounterChance){
+  let idle = 12 + Math.random() * 25;
+  time += idle;
   log += "idle...\n";
   continue;
 }
 
-// ENEMY HIT
-let fightTime = 2 + Math.random()*4;
-let dmg = dmgRate * fightTime;
+
+// ENEMY (LOW FREQUENCY HIT)
+let enemyDamage = damageRate * (1 + Math.random() * 0.5);
+
+// FIGHT TIME
+let fightTime = 1.5 + Math.random() * 3;
+
 
 // CRIT
 if(Math.random() < crit){
-  dmg *= 1.5;
+  enemyDamage *= 1.4;
   log += "crit!\n";
 }
 
+
 // DODGE
 if(Math.random() < dodge){
-  dmg = 0;
+  enemyDamage = 0;
   log += "dodged!\n";
 }
 
-hp -= dmg;
+hp -= enemyDamage;
 
-// HEAL SYSTEM
-if(hp < maxHP*0.35 && stim > 0){
-  hp += 100;
+
+// HEAL LOGIC
+if(hp < maxHP * 0.4 && stim > 0){
+  hp += 80;
   stim--;
   log += "stim used\n";
 }
 
-if(hp < maxHP*0.6 && rad > 0){
-  hp += 50;
+if(hp < maxHP * 0.6 && rad > 0){
+  hp += 40;
   rad--;
   log += "rad used\n";
 }
 
+
 // TIME ADVANCE
-time += fightTime + (6 + Math.random()*10);
+time += fightTime + (10 + Math.random() * 20);
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
 if(hp <= 0) break;
 }
+
 
 // RESULT
 let survive = Math.floor(time / 60);
@@ -233,16 +256,18 @@ if(notif < 1) notif = 1;
 
 let notifTime = new Date(now.getTime() + notif * 60000);
 
+
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
 log += "death: " + death.toLocaleString() + "\n";
 log += "alert: " + notifTime.toLocaleString();
 
-printLog(log);
+
+// TYPE EFFECT BACK
+typeLog(log);
 
 }
 
 </script>
-
 </body>
 </html>
