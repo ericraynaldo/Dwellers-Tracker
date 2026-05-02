@@ -7,42 +7,28 @@
 <title>Dwellers Tracker</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html, body {
+body {
   margin: 0;
-  padding: 0;
   font-family: "Courier New", monospace;
   background: black;
   color: #00ff88;
   overflow-x: hidden;
 }
 
-/* HEADER */
 .header {
-  width: 100%;
-  background: #001a0d;
   padding: 12px;
+  background: #001a0d;
   border-bottom: 2px solid #00ff88;
 }
 
-.title {
-  font-size: 16px;
-}
+.title { font-size: 16px; }
 
-.clock {
-  font-size: 12px;
-  margin-top: 5px;
-}
+.clock { font-size: 12px; margin-top: 5px; }
 
-/* CONTAINER */
-.container {
-  padding: 12px;
-}
+.container { padding: 12px; }
 
-/* FORM */
 .form {
   display: flex;
   flex-direction: column;
@@ -50,7 +36,6 @@ html, body {
 }
 
 input {
-  width: 100%;
   padding: 10px;
   background: black;
   color: #00ff88;
@@ -58,9 +43,7 @@ input {
   font-size: 14px;
 }
 
-/* BUTTON */
 button {
-  width: 100%;
   padding: 12px;
   background: #003311;
   color: #00ff88;
@@ -73,7 +56,6 @@ button:active {
   background: #005522;
 }
 
-/* LOG */
 .log {
   margin-top: 15px;
   white-space: pre-line;
@@ -102,7 +84,7 @@ button:active {
 <input id="weaponMax" placeholder="Weapon Max Damage">
 <input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
-<button id="btnActivate">ACTIVATE</button>
+<button id="activateBtn">ACTIVATE</button>
 
 </div>
 
@@ -113,136 +95,118 @@ button:active {
 <script>
 
 // CLOCK
-setInterval(()=>{
-  document.getElementById("clock").innerText =
-    new Date().toLocaleString();
-},1000);
+setInterval(() => {
+  document.getElementById("clock").innerText = new Date().toLocaleString();
+}, 1000);
 
 
-// TYPEWRITER LOG (INI YANG HILANG SEBELUMNYA)
+// TYPEWRITER
 function typeLog(text){
   let i = 0;
-  let out = document.getElementById("log");
-  out.innerText = "";
+  const el = document.getElementById("log");
+  el.innerText = "";
 
   function step(){
     if(i < text.length){
-      out.innerText += text[i++];
-      setTimeout(step, 8);
+      el.innerText += text[i++];
+      setTimeout(step, 6);
     }
   }
   step();
 }
 
 
-// BUTTON
-document.getElementById("btnActivate").addEventListener("click", simulate);
+// BUTTON (FIXED SAFE BIND)
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("activateBtn").addEventListener("click", simulate);
+});
 
 
-// SIMULATION FIXED MODEL
+// SIMULATION (DATA BASED FIXED MODEL)
 function simulate(){
 
-let log = ">> WASTELAND SIMULATION (STABLE MODEL)\n\n";
+let L = Number(document.getElementById("level").value) || 1;
+let E = Number(document.getElementById("endurance").value) || 1;
+let Luck = Number(document.getElementById("luck").value) || 1;
+let S = Number(document.getElementById("stim").value) || 0;
+let R = Number(document.getElementById("rad").value) || 0;
+let minW = Number(document.getElementById("weaponMin").value) || 1;
+let maxW = Number(document.getElementById("weaponMax").value) || 1;
+let buffer = Number(document.getElementById("buffer").value) || 30;
 
-// INPUT
-let L = Number(level.value) || 1;
-let E = Number(endurance.value) || 1;
-let Luck = Number(luck.value) || 1;
-let S = Number(stim.value) || 0;
-let R = Number(rad.value) || 0;
-let minW = Number(weaponMin.value) || 1;
-let maxW = Number(weaponMax.value) || 1;
-let buffer = Number(buffer.value) || 30;
+let log = ">> SIMULATION START\n\n";
 
-
-// HP MODEL (FIXED)
+// HP MODEL (BASED ON REAL DATA STYLE)
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
-// DPS
-let dps = (minW + maxW) / 2;
-if(dps < 1) dps = 1;
-
-// LUCK
-let crit = 0.08 + Luck * 0.015;
-let dodge = 0.03 + Luck * 0.01;
-
-// BASE DAMAGE (FROM YOUR REAL DATA)
-let baseDamagePerMin = 0.6; // 🔥 DIPERLAMBAT dari 0.9
+// DAMAGE MODEL (FROM YOUR REAL SAVE)
+let baseDamage = 0.6; // FIXED EARLY GAME RATE
 
 let stim = S;
 let rad = R;
 let time = 0;
 
-log += "HP START: " + Math.floor(maxHP) + "\n";
-log += "BASE DMG: " + baseDamagePerMin + "/min\n\n";
+// LUCK
+let crit = 0.08 + Luck * 0.015;
+let dodge = 0.03 + Luck * 0.01;
 
+log += "HP: " + Math.floor(hp) + "\n";
+log += "BASE DMG: " + baseDamage + "/min\n\n";
 
 while(hp > 0 && time < 300000){
 
 let minute = time / 60;
 
-// 🔥 SLOW SCALING (FIXED, LAMBAT)
+// SLOW SCALING (IMPORTANT FIX)
 let scaling = 1 + (minute * 0.006);
-let damageRate = baseDamagePerMin * scaling;
+let damageRate = baseDamage * scaling;
 
-
-// 🔥 ENCOUNTER SYSTEM (JARANG)
-let encounterChance = 0.25; // lebih aman
-
-if(Math.random() > encounterChance){
-  let idle = 12 + Math.random() * 25;
-  time += idle;
+// LOW ENCOUNTER FREQUENCY
+if(Math.random() > 0.28){
+  time += 12 + Math.random() * 20;
   log += "idle...\n";
   continue;
 }
 
-
-// ENEMY (LOW FREQUENCY HIT)
-let enemyDamage = damageRate * (1 + Math.random() * 0.5);
-
-// FIGHT TIME
+// ENEMY HIT
 let fightTime = 1.5 + Math.random() * 3;
-
+let dmg = damageRate * fightTime;
 
 // CRIT
 if(Math.random() < crit){
-  enemyDamage *= 1.4;
+  dmg *= 1.4;
   log += "crit!\n";
 }
 
-
 // DODGE
 if(Math.random() < dodge){
-  enemyDamage = 0;
+  dmg = 0;
   log += "dodged!\n";
 }
 
-hp -= enemyDamage;
-
+hp -= dmg;
 
 // HEAL LOGIC
 if(hp < maxHP * 0.4 && stim > 0){
   hp += 80;
   stim--;
-  log += "stim used\n";
+  log += "stim\n";
 }
 
 if(hp < maxHP * 0.6 && rad > 0){
   hp += 40;
   rad--;
-  log += "rad used\n";
+  log += "rad\n";
 }
 
-
 // TIME ADVANCE
-time += fightTime + (10 + Math.random() * 20);
+time += fightTime + (8 + Math.random() * 15);
 
 log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
 
 if(hp <= 0) break;
 }
-
 
 // RESULT
 let survive = Math.floor(time / 60);
@@ -256,18 +220,17 @@ if(notif < 1) notif = 1;
 
 let notifTime = new Date(now.getTime() + notif * 60000);
 
-
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
 log += "death: " + death.toLocaleString() + "\n";
 log += "alert: " + notifTime.toLocaleString();
 
-
-// TYPE EFFECT BACK
+// OUTPUT
 typeLog(log);
 
 }
 
 </script>
+
 </body>
 </html>
