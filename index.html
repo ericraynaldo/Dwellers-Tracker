@@ -78,10 +78,11 @@ button {
 </div>
 
 <div class="container">
+
 <div class="card">
 
 <label>Level</label>
-<input type="number" id="level">
+<input type="number" id="level" placeholder="contoh: 10">
 
 <label>Endurance</label>
 <input type="number" id="endurance">
@@ -101,7 +102,7 @@ button {
 <label>Notif sebelum mati (menit)</label>
 <input type="number" id="buffer" value="30">
 
-<button id="calcBtn">Calculate</button>
+<button onclick="calculate()">Calculate</button>
 
 <div class="result" id="output"></div>
 
@@ -110,31 +111,33 @@ button {
 
 <script>
 
-// ⏰ CLOCK
-setInterval(() => {
-  document.getElementById("clock").innerText =
+// ⏰ JAM REALTIME
+function updateClock() {
+  document.getElementById("clock").innerHTML =
     new Date().toLocaleString();
-}, 1000);
+}
+setInterval(updateClock, 1000);
+updateClock();
 
 
-// 🔥 BUTTON EVENT (lebih aman daripada onclick)
-document.getElementById("calcBtn").addEventListener("click", calculate);
-
-
-// 🔥 MAIN FUNCTION
+// 🔥 SIMULASI (SUDAH FIX)
 function calculate() {
 
-  let L = parseInt(document.getElementById("level").value) || 1;
-  let E = parseInt(document.getElementById("endurance").value) || 1;
-  let S = parseInt(document.getElementById("stim").value) || 0;
-  let R = parseInt(document.getElementById("rad").value) || 0;
-  let minW = parseInt(document.getElementById("weaponMin").value) || 1;
-  let maxW = parseInt(document.getElementById("weaponMax").value) || 1;
-  let bufferVal = parseInt(document.getElementById("buffer").value) || 30;
+  let L = +document.getElementById("level").value || 1;
+  let E = +document.getElementById("endurance").value || 1;
+  let S = +document.getElementById("stim").value || 0;
+  let R = +document.getElementById("rad").value || 0;
+  let minW = +document.getElementById("weaponMin").value || 1;
+  let maxW = +document.getElementById("weaponMax").value || 1;
+  let bufferVal = +document.getElementById("buffer").value || 30;
 
+  // 🔫 weapon avg damage
   let playerDPS = (minW + maxW) / 2;
+
+  // 🔥 biar ga terlalu lemah
   if (playerDPS < 5) playerDPS = 5;
 
+  // ❤️ HP system
   let maxHP = 120 + (L * 12) + (E * 25);
   let hp = maxHP;
 
@@ -157,22 +160,28 @@ function calculate() {
     enemyDPS *= difficulty;
 
     let fightTime = enemyHP / playerDPS;
+
+    // 🔥 limit biar realistis
     if (fightTime > 8) fightTime = 8;
 
     let damage = enemyDPS * fightTime;
     hp -= damage;
 
+    // 💉 stimpack
     if (hp < maxHP * 0.35 && stim > 0) {
       hp += 120;
       stim--;
     }
 
+    // ☢️ radaway
     if (hp < maxHP * 0.6 && rad > 0) {
       hp += 60;
       rad--;
     }
 
+    // 💤 jeda antar fight
     let idle = Math.random() * 5;
+
     time += fightTime + idle;
 
     if (hp <= 0) break;
