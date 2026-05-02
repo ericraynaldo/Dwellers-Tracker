@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-<title>Dwellers Tracker V1.4 FAST</title>
+<title>Dwellers Tracker V1.5</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -64,7 +64,7 @@ button {
   color: #00ff88;
 }
 
-/* LOG WINDOW */
+/* LOG WINDOW FIXED */
 .log {
   margin: 10px;
   border: 1px solid #00ff88;
@@ -99,7 +99,7 @@ button {
 
 <div class="header">
   <div class="title">Dwellers Tracker</div>
-  <div class="version">V1.4 FAST SIM</div>
+  <div class="version">V1.5 HYBRID SIM</div>
   <div class="clock" id="clock"></div>
 </div>
 
@@ -139,16 +139,57 @@ setInterval(() => {
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
-/* 🔥 FAST LOG (20 LINES ONLY) */
-function renderLog(text){
-  const el = document.getElementById("logText");
+/* 🔥 LOG ENGINE (20 LINES WINDOW + TYPE ANIMATION) */
+function createLogger(){
 
-  let lines = text.split("\n");
-  if(lines.length > 20){
-    lines = lines.slice(-20);
+  const el = document.getElementById("logText");
+  let buffer = "";
+  let queue = [];
+  let typing = false;
+
+  function render(){
+    let lines = buffer.split("\n");
+
+    if(lines.length > 20){
+      lines = lines.slice(-20);
+    }
+
+    el.innerText = lines.join("\n");
   }
 
-  el.innerText = lines.join("\n");
+  function push(text){
+    queue.push(text);
+    if(!typing) type();
+  }
+
+  function type(){
+
+    typing = true;
+
+    if(queue.length === 0){
+      typing = false;
+      return;
+    }
+
+    let text = queue.shift();
+    let i = 0;
+
+    function step(){
+      if(i < text.length){
+        buffer += text[i++];
+        render();
+        setTimeout(step, 4);
+      } else {
+        buffer += "\n";
+        render();
+        setTimeout(type, 10);
+      }
+    }
+
+    step();
+  }
+
+  return { push, getBuffer: () => buffer };
 }
 
 /* SIMULATION */
@@ -156,7 +197,7 @@ document.getElementById("btn").addEventListener("click", simulate);
 
 function simulate(){
 
-let log = ">> SIMULATION START\n";
+const log = createLogger();
 
 let L = val("level") || 1;
 let E = val("endurance") || 1;
@@ -172,31 +213,49 @@ let wMax = val("weaponMax") || 1;
 let level = L;
 let maxHP = 100 + (level * (3 + E * 0.8));
 let hp = maxHP;
-
 let radDamage = 0;
 let time = 0;
 
-log += "HP: " + Math.floor(hp) + "\n";
+log.push(">> SIMULATION START");
+log.push("HP: " + Math.floor(hp));
 
-/* CORE LOOP */
-while(hp > 0 && time < 8000){
+/* LOOP */
+let interval = setInterval(() => {
 
-/* TIME PRESSURE (IMPORTANT FIX) */
-let dangerScale = 1 + (time / 1500);
+if(hp <= 0 || time > 9000){
+  clearInterval(interval);
+
+  let surviveMin = Math.floor(time / 60);
+  if(surviveMin < 1) surviveMin = 1;
+
+  let deathDate = new Date(Date.now() + surviveMin * 60000);
+
+  let d = Math.floor(surviveMin / 1440);
+  let h = Math.floor((surviveMin % 1440) / 60);
+  let m = surviveMin % 60;
+
+  log.push(" ");
+  log.push("RESULT");
+  log.push(surviveMin + " min");
+  log.push(d + "d " + h + "h " + m + "m");
+  log.push(deathDate.toLocaleString());
+
+  return;
+}
 
 /* LEVEL UP */
-if(Math.random() < 0.015){
+if(Math.random() < 0.02){
   level++;
   maxHP = 100 + (level * (3 + E * 0.8));
   hp = maxHP;
-  log += "LEVEL UP FULL HEAL\n";
+  log.push("LEVEL UP FULL HEAL");
 }
 
 /* RAD */
-if(rad > 0 && Math.random() < 0.25){
+if(rad > 0 && Math.random() < 0.2){
   radDamage += 5;
   rad--;
-  log += "RAD +\n";
+  log.push("RAD +");
 }
 
 let effectiveMax = maxHP - radDamage;
@@ -205,15 +264,14 @@ if(hp > effectiveMax) hp = effectiveMax;
 /* WEAPON */
 let weapon = (wMin + wMax) / 2;
 
-/* DAMAGE CORE */
+/* DAMAGE */
 let baseDamage = 1.3;
-
 let enduranceReduce = Math.max(0.55, 1 - (E * 0.08));
 let luckVar = 0.8 + Math.random() * (1 + Luck * 0.02);
+let dangerScale = 1 + (time / 1500);
 
 let encounterChance = 0.7 + (time / 10000);
 
-/* SPIKE EVENT */
 let dmg = (baseDamage + weapon * 0.07)
         * enduranceReduce
         * luckVar
@@ -222,46 +280,26 @@ let dmg = (baseDamage + weapon * 0.07)
 if(Math.random() < encounterChance){
   if(Math.random() < 0.12){
     dmg *= 1.8;
-    log += "RAID HIT!\n";
+    log.push("RAID HIT!");
   }
   hp -= dmg;
 } else {
-  log += "idle\n";
+  log.push("idle");
 }
 
 /* STIM */
 if(hp < effectiveMax * 0.35 && stim > 0){
   hp += 60;
   stim--;
-  log += "stim\n";
+  log.push("stim");
 }
 
 /* TIME */
-time += 8 + Math.random() * 15;
+time += 10 + Math.random() * 12;
 
-log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
+log.push("t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp));
 
-/* LIVE RENDER (FAST) */
-renderLog(log);
-
-}
-
-/* RESULT */
-let surviveMin = Math.floor(time / 60);
-if(surviveMin < 1) surviveMin = 1;
-
-let deathDate = new Date(Date.now() + surviveMin * 60000);
-
-let d = Math.floor(surviveMin / 1440);
-let h = Math.floor((surviveMin % 1440) / 60);
-let m = surviveMin % 60;
-
-log += "\nRESULT\n";
-log += surviveMin + " min\n";
-log += d + "d " + h + "h " + m + "m\n";
-log += deathDate.toLocaleString();
-
-renderLog(log);
+}, 60);
 
 }
 
