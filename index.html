@@ -70,30 +70,28 @@ button {
   color: #00ff88;
 }
 
-/* LOG WINDOW FIXED */
+/* LOG BOX AUTO FIT */
 .log {
-  flex: 1;
-  margin: 0 10px;
+  margin: 10px;
   border: 1px solid #00ff88;
-  padding: 8px;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
-  min-height: 200px;
 
-  /* FIX INI PENTING */
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
+  /* KEY FIX */
+  display: inline-block;
+  max-width: calc(100% - 20px);
+  padding: 8px;
 }
 
-/* inner terminal */
+/* text inside */
 #logText {
-  width: 100%;
   white-space: pre-wrap;
+  line-height: 1.3;
 }
 
 /* FOOTER */
 .footer {
+  margin-top: auto;
   padding: 10px;
   text-align: center;
   border-top: 2px solid #00ff88;
@@ -109,14 +107,12 @@ button {
 
 <div class="app">
 
-<!-- HEADER -->
 <div class="header">
   <div class="title">Dwellers Tracker</div>
   <div class="version">V1.0</div>
   <div class="clock" id="clock"></div>
 </div>
 
-<!-- INPUT -->
 <div class="input-section">
 
 <input id="level" placeholder="Level">
@@ -124,18 +120,16 @@ button {
 <input id="luck" placeholder="Luck">
 <input id="stim" placeholder="Stimpack">
 <input id="rad" placeholder="RadAway">
-<input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
 <button id="btn">ACTIVATE</button>
 
 </div>
 
-<!-- LOG FIXED WINDOW -->
+<!-- LOG AUTO SIZE -->
 <div class="log">
   <div id="logText">>> READY</div>
 </div>
 
-<!-- FOOTER -->
 <div class="footer">
   Dwellers Tracker V1.0 — Wasteland Simulation Core
 </div>
@@ -150,29 +144,29 @@ setInterval(() => {
     new Date().toLocaleString();
 }, 1000);
 
-/* INPUT */
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
-/* TYPE SYSTEM (FIXED WINDOW STYLE) */
+/* TYPE LOG (KEEP LAST LINES ONLY) */
 function typeLog(text){
   const el = document.getElementById("logText");
   let i = 0;
-  let current = "";
+  let buffer = "";
 
   function step(){
     if(i < text.length){
-      current += text[i++];
-      
-      // FIX: hanya tampilkan LAST PART (terminal style)
-      let lines = current.split("\n");
-      if(lines.length > 12){
-        lines = lines.slice(-12); // batasi tinggi log
+      buffer += text[i++];
+
+      let lines = buffer.split("\n");
+
+      // keep last 10 lines only
+      if(lines.length > 10){
+        lines = lines.slice(-10);
       }
 
       el.innerText = lines.join("\n");
 
-      setTimeout(step, 4);
+      setTimeout(step, 5);
     }
   }
 
