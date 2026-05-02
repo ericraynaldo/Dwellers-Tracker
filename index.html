@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- 🔥 PWA FULLSCREEN SUPPORT -->
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <title>Dwellers Tracker</title>
 
@@ -11,16 +18,19 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* 🔥 lock scroll */
   font-family: "Courier New", monospace;
   background: black;
   color: #00ff88;
-  overflow: hidden; /* 🔥 FIX: halaman tidak bisa scroll */
 }
 
 /* HEADER */
 .header {
+  height: 60px;
   padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
@@ -34,8 +44,8 @@ body {
   font-size: 12px;
 }
 
-/* LAYOUT */
-.container {
+/* MAIN WRAPPER */
+.wrapper {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px);
@@ -55,6 +65,7 @@ input {
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
+  font-size: 13px;
 }
 
 button {
@@ -62,28 +73,30 @@ button {
   background: #003311;
   border: 1px solid #00ff88;
   color: #00ff88;
+  font-size: 14px;
   cursor: pointer;
 }
 
-/* 🔥 LOG WINDOW (FIXED SCROLL AREA) */
+/* 🔥 LOG WINDOW FIXED */
 .log {
   flex: 1;
   border: 1px solid #00ff88;
   padding: 10px;
-  overflow-y: auto;   /* 🔥 SCROLL HANYA DI SINI */
+  overflow-y: auto;
   white-space: pre-line;
   font-size: 12px;
   background: rgba(0,255,136,0.05);
 }
 
-/* smooth scroll feel */
+/* scroll bar */
 .log::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 .log::-webkit-scrollbar-thumb {
   background: #00ff88;
 }
 </style>
+
 </head>
 
 <body>
@@ -93,7 +106,7 @@ button {
   <div class="clock" id="clock"></div>
 </div>
 
-<div class="container">
+<div class="wrapper">
 
 <div class="form">
 
@@ -106,7 +119,7 @@ button {
 <input id="weaponMax" placeholder="Weapon Max">
 <input id="buffer" placeholder="Notif Buffer" value="30">
 
-<button id="btn">ACTIVATE</button>
+<button id="activateBtn">ACTIVATE</button>
 
 </div>
 
@@ -123,16 +136,16 @@ setInterval(()=>{
 },1000);
 
 
-// TYPEWRITER (smooth + auto scroll)
+// TYPE LOG SAFE
 function typeLog(text){
   let i = 0;
-  let el = document.getElementById("log");
+  const el = document.getElementById("log");
   el.innerText = "";
 
   function step(){
     if(i < text.length){
       el.innerText += text[i++];
-      el.scrollTop = el.scrollHeight; // 🔥 AUTO SCROLL INSIDE BOX
+      el.scrollTop = el.scrollHeight; // auto scroll
       setTimeout(step, 5);
     }
   }
@@ -140,39 +153,41 @@ function typeLog(text){
 }
 
 
-// BUTTON
-document.getElementById("btn").addEventListener("click", simulate);
+// 🔥 FIXED EVENT BIND (INI YANG BIKIN TOMBOL MATI SEBELUMNYA)
+window.addEventListener("load", () => {
+  document.getElementById("activateBtn").addEventListener("click", runSim);
+});
 
 
-// SIMULATION FIXED MODEL
-function simulate(){
+// SIMULATION CORE (REALISTIC MODEL)
+function runSim(){
 
 let log = ">> SIMULATION START\n\n";
 
 // INPUT SAFE
-let L = Number(level.value) || 1;
-let E = Number(endurance.value) || 1;
-let Luck = Number(luck.value) || 1;
-let S = Number(stim.value) || 0;
-let R = Number(rad.value) || 0;
-let minW = Number(weaponMin.value) || 1;
-let maxW = Number(weaponMax.value) || 1;
-let buffer = Number(buffer.value) || 30;
+let L = Number(document.getElementById("level").value) || 1;
+let E = Number(document.getElementById("endurance").value) || 1;
+let Luck = Number(document.getElementById("luck").value) || 1;
+let S = Number(document.getElementById("stim").value) || 0;
+let R = Number(document.getElementById("rad").value) || 0;
+let minW = Number(document.getElementById("weaponMin").value) || 1;
+let maxW = Number(document.getElementById("weaponMax").value) || 1;
+let buffer = Number(document.getElementById("buffer").value) || 30;
 
-// HP MODEL
+// HP MODEL (STABLE)
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
-// DAMAGE BASE (REALISTIC EARLY GAME)
+// BASE DAMAGE (REAL DATA BASED)
 let baseDamage = 0.6;
+
+// LUCK SYSTEM
+let crit = 0.08 + Luck * 0.015;
+let dodge = 0.03 + Luck * 0.01;
 
 let stim = S;
 let rad = R;
 let time = 0;
-
-// LUCK
-let crit = 0.08 + Luck * 0.015;
-let dodge = 0.03 + Luck * 0.01;
 
 log += "HP: " + Math.floor(hp) + "\n";
 log += "BASE DMG: " + baseDamage + "\n\n";
@@ -185,9 +200,9 @@ let minute = time / 60;
 let scaling = 1 + (minute * 0.006);
 let dmgRate = baseDamage * scaling;
 
-// ENCOUNTER (JARANG)
+// ENCOUNTER (LOW FREQUENCY)
 if(Math.random() > 0.28){
-  time += 10 + Math.random()*20;
+  time += 12 + Math.random()*18;
   log += "idle...\n";
   continue;
 }
@@ -236,12 +251,12 @@ let survive = Math.floor(time/60);
 if(survive < 1) survive = 1;
 
 let now = new Date();
-let death = new Date(now.getTime() + survive*60000);
+let death = new Date(now.getTime() + survive * 60000);
 
 let notif = survive - buffer;
 if(notif < 1) notif = 1;
 
-let alert = new Date(now.getTime() + notif*60000);
+let alert = new Date(now.getTime() + notif * 60000);
 
 log += "\nRESULT\n";
 log += "survive: " + survive + " min\n";
