@@ -11,14 +11,11 @@
 
 <title>Dwellers Tracker V1.0</title>
 
-<!-- 🔥 PWA MANIFEST -->
 <link rel="manifest" href="manifest.json">
 
 <style>
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
@@ -26,30 +23,22 @@ html, body {
   background: black;
   color: #00ff88;
   font-family: "Courier New", monospace;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* APP LAYOUT */
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
-/* HEADER */
 .header {
   padding: 10px;
   background: #001a0d;
   border-bottom: 2px solid #00ff88;
-  position: sticky;
-  top: 0;
 }
 
-.title { font-size: 15px; }
-.version { font-size: 11px; opacity: 0.8; }
-.clock { font-size: 11px; }
-
-/* INPUT */
 .input-section {
   padding: 10px;
   display: flex;
@@ -57,12 +46,15 @@ html, body {
   gap: 6px;
 }
 
+input, button {
+  touch-action: manipulation;
+}
+
 input {
   padding: 8px;
   background: black;
   border: 1px solid #00ff88;
   color: #00ff88;
-  font-size: 13px;
 }
 
 button {
@@ -72,7 +64,6 @@ button {
   color: #00ff88;
 }
 
-/* LOG WINDOW */
 .log {
   flex: 1;
   margin: 0 10px;
@@ -81,10 +72,8 @@ button {
   overflow-y: auto;
   background: rgba(0,255,136,0.05);
   font-size: 12px;
-  min-height: 200px;
 }
 
-/* FOOTER */
 .footer {
   padding: 10px;
   text-align: center;
@@ -101,14 +90,12 @@ button {
 
 <div class="app">
 
-<!-- HEADER -->
 <div class="header">
-  <div class="title">Dwellers Tracker</div>
-  <div class="version">V1.0</div>
-  <div class="clock" id="clock"></div>
+  <div>Dwellers Tracker</div>
+  <div>V1.0</div>
+  <div id="clock"></div>
 </div>
 
-<!-- INPUT -->
 <div class="input-section">
 
 <input id="level" placeholder="Level">
@@ -116,18 +103,13 @@ button {
 <input id="luck" placeholder="Luck">
 <input id="stim" placeholder="Stimpack">
 <input id="rad" placeholder="RadAway">
-<input id="weaponMin" placeholder="Weapon Min">
-<input id="weaponMax" placeholder="Weapon Max">
-<input id="buffer" placeholder="Notif Buffer (min)" value="30">
 
 <button id="btn">ACTIVATE</button>
 
 </div>
 
-<!-- LOG -->
 <div class="log" id="log">>> READY</div>
 
-<!-- FOOTER -->
 <div class="footer">
   Dwellers Tracker V1.0 — Wasteland Simulation Core
 </div>
@@ -142,52 +124,85 @@ setInterval(() => {
     new Date().toLocaleString();
 }, 1000);
 
-/* SAFE INPUT */
+/* INPUT */
 const val = (id) =>
   Number(document.getElementById(id)?.value || 0);
 
-/* TYPE LOG */
-function typeLog(text){
+/* LOG SYSTEM (LIMITED + TYPEWRITER) */
+const logEl = document.getElementById("log");
+let logLines = [];
+const MAX_LINES = 80;
+
+/* TYPEWRITER QUEUE */
+let queue = [];
+let typing = false;
+
+/* ADD LOG */
+function addLog(text){
+  queue.push(text);
+  if(!typing) typeNext();
+}
+
+/* TYPE EFFECT */
+function typeNext(){
+  if(queue.length === 0){
+    typing = false;
+    return;
+  }
+
+  typing = true;
+  let text = queue.shift();
   let i = 0;
-  const el = document.getElementById("log");
-  el.innerText = "";
+
+  let line = document.createElement("div");
+  logEl.appendChild(line);
 
   function step(){
     if(i < text.length){
-      el.innerText += text[i++];
-      el.scrollTop = el.scrollHeight;
-      setTimeout(step, 4);
+      line.textContent += text[i++];
+      setTimeout(step, 10);
+    } else {
+      finalize(line);
+      typeNext();
     }
   }
+
   step();
 }
 
-/* FIXED BUTTON (ANTI BUG HP + GITHUB) */
-document.addEventListener("DOMContentLoaded", () => {
+/* LIMIT LOG MEMORY */
+function finalize(line){
+  logLines.push(line);
 
-  const btn = document.getElementById("btn");
+  if(logLines.length > MAX_LINES){
+    let old = logLines.shift();
+    old.remove();
+  }
 
-  btn.addEventListener("click", simulate);
+  // hanya scroll kalau user masih di bawah
+  let nearBottom =
+    logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 50;
 
-});
+  if(nearBottom){
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
 
-/* SIMULATION CORE */
+/* SIMULATION */
+document.getElementById("btn").addEventListener("click", simulate);
+
 function simulate(){
-
-let log = ">> SIMULATION START\n\n";
 
 let L = val("level") || 1;
 let E = val("endurance") || 1;
 let Luck = val("luck") || 1;
 let S = val("stim") || 0;
 let R = val("rad") || 0;
-let buffer = val("buffer") || 30;
 
 let maxHP = 100 + (L * (3 + E * 0.8));
 let hp = maxHP;
 
 let baseDamage = 0.6;
-
 let stim = S;
 let rad = R;
 let time = 0;
@@ -195,9 +210,15 @@ let time = 0;
 let crit = 0.08 + Luck * 0.015;
 let dodge = 0.03 + Luck * 0.01;
 
-log += "HP: " + Math.floor(hp) + "\n\n";
+addLog(">> SIMULATION START");
+addLog("HP: " + Math.floor(hp));
 
-while(hp > 0 && time < 300000){
+function step(){
+
+if(hp <= 0 || time > 300000){
+  finish();
+  return;
+}
 
 let minute = time / 60;
 let scaling = 1 + (minute * 0.006);
@@ -205,8 +226,9 @@ let dmgRate = baseDamage * scaling;
 
 if(Math.random() > 0.3){
   time += 10 + Math.random()*15;
-  log += "idle...\n";
-  continue;
+  addLog("idle...");
+  setTimeout(step, 40);
+  return;
 }
 
 let fightTime = 2 + Math.random()*3;
@@ -214,12 +236,12 @@ let dmg = dmgRate * fightTime;
 
 if(Math.random() < crit){
   dmg *= 1.4;
-  log += "crit!\n";
+  addLog("CRIT!");
 }
 
 if(Math.random() < dodge){
   dmg = 0;
-  log += "dodged!\n";
+  addLog("DODGED!");
 }
 
 hp -= dmg;
@@ -227,33 +249,33 @@ hp -= dmg;
 if(hp < maxHP*0.4 && stim > 0){
   hp += 80;
   stim--;
-  log += "stim\n";
+  addLog("stim used");
 }
 
 if(hp < maxHP*0.6 && rad > 0){
   hp += 40;
   rad--;
-  log += "rad\n";
+  addLog("rad used");
 }
 
 time += fightTime + (10 + Math.random()*15);
 
-log += "t:" + Math.floor(time/60) + "m hp:" + Math.floor(hp) + "\n";
+addLog(`t:${Math.floor(time/60)}m hp:${Math.floor(hp)}`);
 
-if(hp <= 0) break;
+setTimeout(step, 40);
 }
 
-let survive = Math.floor(time/60);
-if(survive < 1) survive = 1;
+function finish(){
+  let survive = Math.max(1, Math.floor(time/60));
+  let death = new Date(Date.now() + survive * 60000);
 
-let death = new Date(Date.now() + survive * 60000);
+  addLog(" ");
+  addLog("RESULT");
+  addLog("survive: " + survive + " min");
+  addLog("death: " + death.toLocaleString());
+}
 
-log += "\nRESULT\n";
-log += "survive: " + survive + " min\n";
-log += "death: " + death.toLocaleString();
-
-typeLog(log);
-
+step();
 }
 
 </script>
