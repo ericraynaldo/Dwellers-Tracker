@@ -3,67 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dweller Survival Tracker</title>
+<title>Dwellers Tracker</title>
 
 <style>
 body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+  color: #000000;
+  margin: 0;
 }
-.container { max-width: 500px; margin:auto; }
 
 .header {
-  text-align:center;
-  margin-bottom:15px;
+  background: #2563eb;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
 }
 
 .card {
-  background:#1e293b;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:15px;
+  background: #f1f5f9;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
 }
 
-input, select {
-  width:100%;
-  padding:10px;
-  margin:5px 0 10px;
-  border-radius:8px;
-  border:none;
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
 button {
-  width:100%;
-  padding:12px;
-  background:#22c55e;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
+  width: 100%;
+  padding: 12px;
+  background: #2563eb;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .result {
-  background:#334155;
-  padding:10px;
-  border-radius:10px;
-  margin-top:10px;
+  background: #e2e8f0;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
 <div class="header">
-  <h2>Dweller Survival Tracker</h2>
-  <div id="date"></div>
-  <div id="clock"></div>
+  Dwellers Tracker
 </div>
 
+<div class="container">
+
+<div id="clock"></div>
+
 <div class="card">
+
 <label>Level Dweller</label>
 <input type="number" id="level">
 
@@ -76,13 +87,11 @@ button {
 <label>RadAway</label>
 <input type="number" id="rad">
 
-<label>Weapon</label>
-<select id="weapon">
-  <option value="5">Rusty (Low)</option>
-  <option value="10">Normal</option>
-  <option value="18">Rare</option>
-  <option value="25">Legendary</option>
-</select>
+<label>Weapon Min Damage</label>
+<input type="number" id="weaponMin">
+
+<label>Weapon Max Damage</label>
+<input type="number" id="weaponMax">
 
 <label>Notif sebelum mati (menit)</label>
 <input type="number" id="buffer" value="30">
@@ -90,8 +99,8 @@ button {
 <button onclick="calculate()">Calculate</button>
 
 <div class="result" id="output"></div>
-</div>
 
+</div>
 </div>
 
 <script>
@@ -99,53 +108,85 @@ button {
 // ⏰ REALTIME CLOCK
 function updateClock() {
   let now = new Date();
-
   document.getElementById("clock").innerHTML =
-    now.toLocaleTimeString();
-
-  document.getElementById("date").innerHTML =
-    now.toLocaleDateString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    now.toLocaleString();
 }
 setInterval(updateClock, 1000);
 updateClock();
 
 
-// 🧠 CALCULATION
+// 🔥 SIMULATION ENGINE
 function calculate() {
+
   let L = +document.getElementById("level").value || 1;
   let E = +document.getElementById("endurance").value || 1;
   let S = +document.getElementById("stim").value || 0;
   let R = +document.getElementById("rad").value || 0;
-  let W = +document.getElementById("weapon").value || 5;
+  let minW = +document.getElementById("weaponMin").value || 1;
+  let maxW = +document.getElementById("weaponMax").value || 1;
   let buffer = +document.getElementById("buffer").value || 30;
 
-  // HP SYSTEM
-  let baseHP = 100 + (E * 25) + (L * 10);
-  let heal = S * 70;
-  let radProtect = R * 50;
+  // 🔫 average weapon damage
+  let playerDPS = (minW + maxW) / 2;
 
-  // DPS SYSTEM
-  let baseDPS = 6 + (L * 0.5);
-  let reduction = W * 0.35;
+  // ❤️ HP SYSTEM
+  let maxHP = 105 + (L * 10) + (E * 20);
+  let hp = maxHP;
 
-  let effectiveDPS = baseDPS - reduction;
-  if (effectiveDPS < 1) effectiveDPS = 1;
+  let stim = S;
+  let rad = R;
 
-  let totalHP = baseHP + heal + radProtect;
+  let time = 0;
 
-  let survivalSeconds = totalHP / effectiveDPS;
-  let survivalMinutes = Math.floor(survivalSeconds / 60);
+  while (hp > 0 && time < 200000) {
 
-  // ⏱ waktu mati real
+    let minute = time / 60;
+    let difficulty = 1 + (minute * 0.05);
+
+    // 👾 RNG MUSUH
+    let rand = Math.random();
+    let enemyHP, enemyDPS;
+
+    if (rand < 0.5) {
+      enemyHP = 20 * difficulty;
+      enemyDPS = 1.5 * difficulty;
+    } else if (rand < 0.8) {
+      enemyHP = 40 * difficulty;
+      enemyDPS = 3 * difficulty;
+    } else {
+      enemyHP = 70 * difficulty;
+      enemyDPS = 5 * difficulty;
+    }
+
+    let fightTime = enemyHP / playerDPS;
+    let damageTaken = enemyDPS * fightTime;
+
+    hp -= damageTaken;
+
+    // 💉 stimpack auto
+    if (hp < maxHP * 0.3 && stim > 0) {
+      hp += 100;
+      stim--;
+    }
+
+    // ☢️ radaway
+    if (hp < maxHP * 0.5 && rad > 0) {
+      hp += 50;
+      rad--;
+    }
+
+    time += fightTime;
+
+    if (hp <= 0) break;
+  }
+
+  let survivalMinutes = Math.floor(time / 60);
+  if (survivalMinutes < 1) survivalMinutes = 1;
+
   let now = new Date();
+
   let deathTime = new Date(now.getTime() + survivalMinutes * 60000);
 
-  // 🔔 notif sebelum mati
   let notifMinutes = survivalMinutes - buffer;
   if (notifMinutes < 1) notifMinutes = 1;
 
@@ -154,7 +195,7 @@ function calculate() {
   document.getElementById("output").innerHTML =
     "⏱ Bertahan: <b>" + survivalMinutes + " menit</b><br><br>" +
     "💀 Estimasi mati:<br><b>" + deathTime.toLocaleString() + "</b><br><br>" +
-    "🔔 Notif akan muncul:<br><b>" + notifTime.toLocaleString() + "</b>";
+    "🔔 Notif:<br><b>" + notifTime.toLocaleString() + "</b>";
 
   startNotification(notifMinutes);
 }
@@ -169,7 +210,7 @@ function startNotification(minutes) {
 
   setTimeout(() => {
     new Notification("⚠️ Dweller Warning", {
-      body: "Segera recall! Sudah mendekati batas aman!"
+      body: "Segera recall dweller!"
     });
   }, minutes * 60000);
 }
