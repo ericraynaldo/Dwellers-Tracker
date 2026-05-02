@@ -7,19 +7,27 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #ffffff;
-  color: #000000;
+  color: #000;
   margin: 0;
 }
 
 .header {
   background: #2563eb;
   color: white;
+  padding: 15px;
   text-align: center;
-  padding: 20px;
   font-size: 22px;
   font-weight: bold;
+  position: relative;
+}
+
+.clock {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  font-size: 14px;
 }
 
 .container {
@@ -32,7 +40,6 @@ body {
   background: #f1f5f9;
   padding: 15px;
   border-radius: 12px;
-  margin-bottom: 15px;
 }
 
 input {
@@ -47,11 +54,10 @@ button {
   width: 100%;
   padding: 12px;
   background: #2563eb;
+  color: white;
   border: none;
   border-radius: 10px;
-  color: white;
   font-weight: bold;
-  cursor: pointer;
 }
 
 .result {
@@ -60,6 +66,16 @@ button {
   border-radius: 10px;
   margin-top: 10px;
 }
+
+.links {
+  margin-top: 15px;
+}
+
+.links a {
+  display: block;
+  margin-bottom: 5px;
+  color: #2563eb;
+}
 </style>
 </head>
 
@@ -67,15 +83,14 @@ button {
 
 <div class="header">
   Dwellers Tracker
+  <div class="clock" id="clock"></div>
 </div>
 
 <div class="container">
 
-<div id="clock"></div>
-
 <div class="card">
 
-<label>Level Dweller</label>
+<label>Level</label>
 <input type="number" id="level">
 
 <label>Endurance</label>
@@ -87,10 +102,10 @@ button {
 <label>RadAway</label>
 <input type="number" id="rad">
 
-<label>Weapon Min Damage</label>
+<label>Weapon Min</label>
 <input type="number" id="weaponMin">
 
-<label>Weapon Max Damage</label>
+<label>Weapon Max</label>
 <input type="number" id="weaponMax">
 
 <label>Notif sebelum mati (menit)</label>
@@ -100,37 +115,42 @@ button {
 
 <div class="result" id="output"></div>
 
+<div class="links">
+  <b>Referensi Data:</b>
+  <a href="https://fallout.fandom.com/wiki/Fallout_Shelter" target="_blank">Fallout Wiki</a>
+  <a href="https://fallout.fandom.com/wiki/Weapons_(Fallout_Shelter)" target="_blank">Weapon Database</a>
+</div>
+
 </div>
 </div>
 
 <script>
 
-// ⏰ REALTIME CLOCK
+// ⏰ CLOCK
 function updateClock() {
-  let now = new Date();
   document.getElementById("clock").innerHTML =
-    now.toLocaleString();
+    new Date().toLocaleString();
 }
 setInterval(updateClock, 1000);
-updateClock();
 
 
-// 🔥 SIMULATION ENGINE
+// 🔥 SIMULATION FIXED
 function calculate() {
 
-  let L = +document.getElementById("level").value || 1;
-  let E = +document.getElementById("endurance").value || 1;
-  let S = +document.getElementById("stim").value || 0;
-  let R = +document.getElementById("rad").value || 0;
-  let minW = +document.getElementById("weaponMin").value || 1;
-  let maxW = +document.getElementById("weaponMax").value || 1;
-  let buffer = +document.getElementById("buffer").value || 30;
+  let L = +level.value || 1;
+  let E = +endurance.value || 1;
+  let S = +stim.value || 0;
+  let R = +rad.value || 0;
+  let minW = +weaponMin.value || 1;
+  let maxW = +weaponMax.value || 1;
+  let buffer = +buffer.value || 30;
 
-  // 🔫 average weapon damage
   let playerDPS = (minW + maxW) / 2;
 
-  // ❤️ HP SYSTEM
-  let maxHP = 105 + (L * 10) + (E * 20);
+  // 🔥 FIX MIN DPS
+  if (playerDPS < 5) playerDPS = 5;
+
+  let maxHP = 120 + (L * 12) + (E * 25);
   let hp = maxHP;
 
   let stim = S;
@@ -141,78 +161,76 @@ function calculate() {
   while (hp > 0 && time < 200000) {
 
     let minute = time / 60;
-    let difficulty = 1 + (minute * 0.05);
+    let difficulty = 1 + (minute * 0.04);
 
-    // 👾 RNG MUSUH
     let rand = Math.random();
-    let enemyHP, enemyDPS;
 
-    if (rand < 0.5) {
-      enemyHP = 20 * difficulty;
-      enemyDPS = 1.5 * difficulty;
-    } else if (rand < 0.8) {
-      enemyHP = 40 * difficulty;
-      enemyDPS = 3 * difficulty;
-    } else {
-      enemyHP = 70 * difficulty;
-      enemyDPS = 5 * difficulty;
-    }
+    let enemyHP = rand < 0.5 ? 25 : rand < 0.8 ? 45 : 70;
+    let enemyDPS = rand < 0.5 ? 1.5 : rand < 0.8 ? 3 : 5;
+
+    enemyHP *= difficulty;
+    enemyDPS *= difficulty;
 
     let fightTime = enemyHP / playerDPS;
-    let damageTaken = enemyDPS * fightTime;
 
-    hp -= damageTaken;
+    // 🔥 LIMIT BIAR GA OVER
+    if (fightTime > 8) fightTime = 8;
 
-    // 💉 stimpack auto
-    if (hp < maxHP * 0.3 && stim > 0) {
-      hp += 100;
+    let damage = enemyDPS * fightTime;
+
+    hp -= damage;
+
+    // 💉 HEAL LOGIC
+    if (hp < maxHP * 0.35 && stim > 0) {
+      hp += 120;
       stim--;
     }
 
-    // ☢️ radaway
-    if (hp < maxHP * 0.5 && rad > 0) {
-      hp += 50;
+    if (hp < maxHP * 0.6 && rad > 0) {
+      hp += 60;
       rad--;
     }
 
-    time += fightTime;
+    // 🔥 JEDA ANTAR FIGHT
+    let idle = Math.random() * 5;
+
+    time += fightTime + idle;
 
     if (hp <= 0) break;
   }
 
-  let survivalMinutes = Math.floor(time / 60);
-  if (survivalMinutes < 1) survivalMinutes = 1;
+  let survival = Math.floor(time / 60);
+  if (survival < 1) survival = 1;
 
   let now = new Date();
 
-  let deathTime = new Date(now.getTime() + survivalMinutes * 60000);
+  let death = new Date(now.getTime() + survival * 60000);
 
-  let notifMinutes = survivalMinutes - buffer;
-  if (notifMinutes < 1) notifMinutes = 1;
+  let notif = survival - buffer;
+  if (notif < 1) notif = 1;
 
-  let notifTime = new Date(now.getTime() + notifMinutes * 60000);
+  let notifTime = new Date(now.getTime() + notif * 60000);
 
-  document.getElementById("output").innerHTML =
-    "⏱ Bertahan: <b>" + survivalMinutes + " menit</b><br><br>" +
-    "💀 Estimasi mati:<br><b>" + deathTime.toLocaleString() + "</b><br><br>" +
-    "🔔 Notif:<br><b>" + notifTime.toLocaleString() + "</b>";
+  output.innerHTML =
+    "⏱ Bertahan: <b>" + survival + " menit</b><br><br>" +
+    "💀 Mati: <b>" + death.toLocaleString() + "</b><br><br>" +
+    "🔔 Notif: <b>" + notifTime.toLocaleString() + "</b>";
 
-  startNotification(notifMinutes);
+  startNotification(notif);
 }
 
 
-// 🔔 NOTIFICATION
-function startNotification(minutes) {
-
+// 🔔 NOTIF
+function startNotification(min) {
   if (Notification.permission !== "granted") {
     Notification.requestPermission();
   }
 
   setTimeout(() => {
-    new Notification("⚠️ Dweller Warning", {
-      body: "Segera recall dweller!"
+    new Notification("⚠️ Recall Dweller!", {
+      body: "Sudah mendekati batas aman!"
     });
-  }, minutes * 60000);
+  }, min * 60000);
 }
 
 </script>
